@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:layout_constrainedWidth="true">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="69dp"
+        android:layout_marginStart="1dp"
+        android:maxWidth="330dp"
+        android:orientation="vertical"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:id="@+id/sticker_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxHeight="16sp"
+            android:text="TextView"
+            android:textColor="@color/colorPrimaryAccent"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/sticker_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxHeight="18sp"
+            android:text="TextView"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/syncState"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="TextView"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/syncBtn"
+        android:layout_width="83dp"
+        android:layout_height="42dp"
+        android:layout_marginEnd="40dp"
+        android:layout_marginBottom="12dp"
+        android:layout_weight="1"
+        android:backgroundTint="#656565"
+        android:insetLeft="2dp"
+        android:insetRight="2dp"
+        android:text="同步"
+        android:textColor="#fff"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <TextView
+        android:id="@+id/rmBtn"
+        android:layout_width="35dp"
+        android:layout_height="34dp"
+        android:layout_marginTop="19dp"
+        android:layout_marginEnd="4dp"
+        android:background="@drawable/rounded_corner"
+        android:clickable="true"
+        android:text="×"
+        android:textAlignment="center"
+        android:textColor="#fff"
+        android:textSize="24sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
