@@ -23,4 +23,4 @@ Only one Telegram client can be used to dump stickers at once. If the plugin is 
 
 ### Credits
 
-This project used [YukiHookAPI](https://github.com/HighCapable/YukiHookAPI) and is greatly depended on the source code of [Telegram Android](https://github.com/DrKLO/Telegram). Thanks!
+This project used [YukiHookAPI](https://github.com/HighCapable/YukiHookAPI) and is greatly dependent on the source code of [Telegram Android](https://github.com/DrKLO/Telegram). Thanks!
