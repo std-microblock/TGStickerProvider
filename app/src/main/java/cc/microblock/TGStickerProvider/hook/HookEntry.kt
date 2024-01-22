@@ -13,6 +13,7 @@ import cc.microblock.TGStickerProvider.nomediaPath
 import cc.microblock.TGStickerProvider.stickerDataPath
 import cc.microblock.TGStickerProvider.syncFlagsPath
 import cc.microblock.TGStickerProvider.tgseDataPath
+import cc.microblock.TGStickerProvider.utils.CachePathHelper.getCachePath
 import com.highcapable.yukihookapi.annotation.xposed.InjectYukiHookWithXposed
 import com.highcapable.yukihookapi.hook.factory.configs
 import com.highcapable.yukihookapi.hook.factory.encase
@@ -49,10 +50,7 @@ class HookEntry : IYukiHookXposedInit {
         Thread {
             Thread.sleep(1000);
             val dataPath = "/data/data/${this.packageName}/";
-            val tgCachePath =
-                if(this.packageName == "xyz.nextalone.nagram") "/storage/emulated/0/Android/data/${this.packageName}/files/caches"
-                else "/storage/emulated/0/Android/data/${this.packageName}/cache"
-                ;
+            val tgCachePath = getCachePath(this.appContext, this.packageName)
 
             if (!File(tgseDataPath).exists()) {
                 File(tgseDataPath).mkdirs();
@@ -146,7 +144,6 @@ class HookEntry : IYukiHookXposedInit {
                                                     val localPath = "${sticker.dc_id}_${sticker.id}.webp";
                                                     val localPathLowQuality = "-${sticker.id}_1109.webp";
                                                     val stickerFile = File(tgCachePath, localPath);
-
                                                     val destFile = File(destDir, "${sticker.id}_high.webp");
                                                     val destFileLowQuality =
                                                         File(destDir, "${sticker.id}_low.webp");
