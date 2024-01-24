@@ -14,6 +14,8 @@ import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.MutableLiveData
@@ -45,16 +47,16 @@ data class StickerInfo(
     val all: Int
 )
 
-class RecyclerAdapterStickerList(val act: MainActivity) :
+class RecyclerAdapterStickerList(private val act: MainActivity) :
     RecyclerView.Adapter<RecyclerAdapterStickerList.ViewHolder>() {
     var stickerList = listOf<StickerInfo>()
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val name = view.findViewById<android.widget.TextView>(R.id.sticker_name)
-        val id = view.findViewById<android.widget.TextView>(R.id.sticker_id)
-        val syncState = view.findViewById<android.widget.TextView>(R.id.syncState)
-        val syncBtn = view.findViewById<android.widget.Button>(R.id.syncBtn)
-        val rmBtn = view.findViewById<MaterialTextView>(R.id.rmBtn)
+        val name: TextView = view.findViewById(R.id.sticker_name)
+        val id: TextView = view.findViewById(R.id.sticker_id)
+        val syncState: TextView = view.findViewById(R.id.syncState)
+        val syncBtn: Button = view.findViewById(R.id.syncBtn)
+        val rmBtn: MaterialTextView = view.findViewById(R.id.rmBtn)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

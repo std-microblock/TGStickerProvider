@@ -90,117 +90,114 @@ class HookEntry : IYukiHookXposedInit {
                                 val data = cursor.getBlob(1)
                                 val stream = SerializedData(data)
 
-                                fun processStream(stream: SerializedData) {
-                                    try {
-                                        var constructorId = stream.readInt32(true)
-                                        var count = 1
+                                try {
+                                    var constructorId = stream.readInt32(true)
+                                    var count = 1
 
-                                        // Compatibility with newer DB sheets(stickersets2, stickerset)
-                                        if (constructorId != 0x6e153f16) {
-                                            count = constructorId
-                                            constructorId = stream.readInt32(true)
-                                        }
-                                        if (constructorId != 0x6e153f16) {
-                                            YLog.error("constructorId != 0x6e153f16")
-                                            return
-                                        }
+                                    // Compatibility with newer DB sheets(stickersets2, stickerset)
+                                    if (constructorId != 0x6e153f16) {
+                                        count = constructorId
+                                        constructorId = stream.readInt32(true)
+                                    }
+                                    if (constructorId != 0x6e153f16) {
+                                        YLog.error("constructorId != 0x6e153f16")
+                                        continue
+                                    }
 
-                                        for (i in 0 until count) {
-                                            try {
-                                                if (i != 0) stream.readInt32(true)
-                                                val stickerSet =
-                                                    TLRPC.TL_messages_stickerSet.TLdeserialize(
-                                                        stream,
-                                                        constructorId,
-                                                        true
-                                                    )
-                                                val hash = stickerSet.set.hash
-                                                if (dedupSet.contains(hash)) continue
-                                                dedupSet.add(hash)
+                                    for (i in 0 until count) {
+                                        try {
+                                            if (i != 0) stream.readInt32(true)
+                                            val stickerSet =
+                                                TLRPC.TL_messages_stickerSet.TLdeserialize(
+                                                    stream,
+                                                    constructorId,
+                                                    true
+                                                )
+                                            val hash = stickerSet.set.hash
+                                            if (dedupSet.contains(hash)) continue
+                                            dedupSet.add(hash)
 
-                                                // use .txt.jpg to bypass the file type check in android 11+
-                                                val stickerNameFile =
-                                                    File(
-                                                        stickerDataPath,
-                                                        "${stickerSet.set.hash}.stickerData.txt.jpg"
-                                                    )
-                                                if (!stickerNameFile.exists()) {
-                                                    try {
-                                                        File(stickerDataPath).mkdirs()
-                                                        stickerNameFile.createNewFile()
-                                                        stickerNameFile.writeText(stickerSet.set.short_name + "\n" + stickerSet.set.title + "\n" + stickerSet.set.count)
-                                                    } catch (e: Exception) {
-                                                        YLog.error(e.toString())
-                                                        // has occupied by another app
-                                                        continue
-                                                    }
+                                            // use .txt.jpg to bypass the file type check in android 11+
+                                            val stickerNameFile =
+                                                File(
+                                                    stickerDataPath,
+                                                    "${stickerSet.set.hash}.stickerData.txt.jpg"
+                                                )
+                                            if (!stickerNameFile.exists()) {
+                                                try {
+                                                    File(stickerDataPath).mkdirs()
+                                                    stickerNameFile.createNewFile()
+                                                    stickerNameFile.writeText(stickerSet.set.short_name + "\n" + stickerSet.set.title + "\n" + stickerSet.set.count)
+                                                } catch (e: Exception) {
+                                                    YLog.error(e.toString())
+                                                    // has occupied by another app
+                                                    continue
                                                 }
+                                            }
 
-                                                var fullSync = true
-                                                val destDir =
-                                                    "${destDataPath}/tgSync_${stickerSet.set.short_name}"
-                                                File(destDir).mkdirs()
+                                            var fullSync = true
+                                            val destDir =
+                                                "${destDataPath}/tgSync_${stickerSet.set.short_name}"
+                                            File(destDir).mkdirs()
 
-                                                var lowQualityCount = 0
-                                                var highQualityCount = 0
-                                                var printLog =
-                                                    false // only print log if there is a new sticker
+                                            var lowQualityCount = 0
+                                            var highQualityCount = 0
+                                            var printLog =
+                                                false // only print log if there is a new sticker
 
-                                                for (sticker in stickerSet.documents) {
-                                                    val localPath =
-                                                        "${sticker.dc_id}_${sticker.id}.webp"
-                                                    val localPathLowQuality =
-                                                        "-${sticker.id}_1109.webp"
-                                                    val stickerFile = File(tgCachePath, localPath)
-                                                    val destFile =
-                                                        File(destDir, "${sticker.id}_high.webp")
-                                                    val destFileLowQuality =
-                                                        File(destDir, "${sticker.id}_low.webp")
+                                            for (sticker in stickerSet.documents) {
+                                                val localPath =
+                                                    "${sticker.dc_id}_${sticker.id}.webp"
+                                                val localPathLowQuality =
+                                                    "-${sticker.id}_1109.webp"
+                                                val stickerFile = File(tgCachePath, localPath)
+                                                val destFile =
+                                                    File(destDir, "${sticker.id}_high.webp")
+                                                val destFileLowQuality =
+                                                    File(destDir, "${sticker.id}_low.webp")
 
-                                                    if (stickerFile.exists()) {
-                                                        highQualityCount++
-                                                        if (!destFile.exists()) {
-                                                            printLog = true
-                                                            stickerFile.copyTo(destFile)
-                                                            if (destFileLowQuality.exists()) {
-                                                                destFileLowQuality.delete()
-                                                            }
+                                                if (stickerFile.exists()) {
+                                                    highQualityCount++
+                                                    if (!destFile.exists()) {
+                                                        printLog = true
+                                                        stickerFile.copyTo(destFile)
+                                                        if (destFileLowQuality.exists()) {
+                                                            destFileLowQuality.delete()
                                                         }
-                                                    } else if (File(
+                                                    }
+                                                } else if (File(
+                                                        tgCachePath,
+                                                        localPathLowQuality
+                                                    ).exists()
+                                                ) {
+                                                    lowQualityCount++
+                                                    if (!destFileLowQuality.exists() && !destFile.exists()) {
+                                                        printLog = true
+                                                        File(
                                                             tgCachePath,
                                                             localPathLowQuality
-                                                        ).exists()
-                                                    ) {
-                                                        lowQualityCount++
-                                                        if (!destFileLowQuality.exists() && !destFile.exists()) {
-                                                            printLog = true
-                                                            File(
-                                                                tgCachePath,
-                                                                localPathLowQuality
-                                                            ).copyTo(destFileLowQuality)
-                                                        }
-                                                    } else {
-                                                        if (!destFile.exists()) fullSync = false
+                                                        ).copyTo(destFileLowQuality)
                                                     }
-
+                                                } else {
+                                                    if (!destFile.exists()) fullSync = false
                                                 }
 
-                                                if (printLog)
-                                                    YLog.debug("*new* [${lowQualityCount + highQualityCount}(Low$lowQualityCount High${highQualityCount})/${stickerSet.set.count}] ${stickerSet.set.title} ${stickerSet.set.short_name} ${stickerSet.set.count} ${stickerSet.set.hash}")
-                                                if (fullSync) ignoreSet.add(stickerSet.set.hash)
-
-                                            } catch (e: Exception) {
-                                                YLog.warn("", e)
-                                                continue
                                             }
+
+                                            if (printLog)
+                                                YLog.debug("*new* [${lowQualityCount + highQualityCount}(Low$lowQualityCount High${highQualityCount})/${stickerSet.set.count}] ${stickerSet.set.title} ${stickerSet.set.short_name} ${stickerSet.set.count} ${stickerSet.set.hash}")
+                                            if (fullSync) ignoreSet.add(stickerSet.set.hash)
+
+                                        } catch (e: Exception) {
+                                            YLog.warn("", e)
+                                            continue
                                         }
-                                    } catch (e: Exception) {
-                                        YLog.warn("", e)
-                                        return
                                     }
+                                } catch (e: Exception) {
+                                    YLog.warn("", e)
+                                    continue
                                 }
 
-                                processStream(stream)
                             }
                             cursor.close()
                             cache4DBConn.close()
@@ -209,18 +206,14 @@ class HookEntry : IYukiHookXposedInit {
                         return true
                     }
 
-                    fun checkDbSheets(dbPath: String): Boolean {
-                        return checkDb(dbPath, "stickers_v2")
-                    }
-
                     // Main DB
-                    checkDbSheets("${dataPath}/files/cache4.db")
+                    checkDb("${dataPath}/files/cache4.db", "stickers_v2")
 
                     // Separate DBs for each account
                     File("$dataPath/files/").listFiles()?.filter {
                         it.isDirectory && it.name.startsWith("account")
                     }?.forEach {
-                        checkDbSheets("${it.path}/cache4.db")
+                        checkDb("${it.path}/cache4.db", "stickers_v2")
                     }
                 } catch (e: Exception) {
                     YLog.debug(e.toString())
