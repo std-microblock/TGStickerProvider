@@ -1,10 +1,10 @@
 package cc.microblock.TGStickerProvider
 
-val dPath = "/storage/emulated/0/Documents/TGStickersExported/"
-val realDataPath = "/storage/emulated/0/Android/media/com.tencent.mobileqq/TGStickersExported/v1/"
-val destDataPath = "${dPath}cache/"
-val tgseDataPath = "${dPath}mb_TGSPData/"
-val stickerDataPath =  "${tgseDataPath}sticker/"
-val syncFlagsPath = "${tgseDataPath}stickerSyncFlags/"
-val nomediaPath = "${dPath}.nomedia"
-val nomediaPath2 = "${realDataPath}.nomedia"
+const val exposedPath = "/storage/emulated/0/Documents/TGStickersExported"
+const val realDataPath = "/storage/emulated/0/Android/media/com.tencent.mobileqq/TGStickersExported/v1"
+const val destDataPath = "$exposedPath/cache/"
+const val tgspDataPath = "$exposedPath/mb_TGSPData"
+const val stickerDataPath =  "$tgspDataPath/sticker/"
+const val syncFlagsPath = "$tgspDataPath/stickerSyncFlags/"
+const val nomediaPath = "$exposedPath/.nomedia"
+const val nomediaPath2 = "$realDataPath/.nomedia"

@@ -2,11 +2,10 @@
 
 package cc.microblock.TGStickerProvider.ui.activity
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.ProgressDialog
-import android.content.ComponentName
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
@@ -18,15 +17,16 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.MutableLiveData
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cc.microblock.TGStickerProvider.BuildConfig
 import cc.microblock.TGStickerProvider.R
-import cc.microblock.TGStickerProvider.dPath
 import cc.microblock.TGStickerProvider.databinding.ActivityMainBinding
 import cc.microblock.TGStickerProvider.destDataPath
+import cc.microblock.TGStickerProvider.exposedPath
 import cc.microblock.TGStickerProvider.realDataPath
 import cc.microblock.TGStickerProvider.stickerDataPath
-import cc.microblock.TGStickerProvider.tgseDataPath
+import cc.microblock.TGStickerProvider.tgspDataPath
 import cc.microblock.TGStickerProvider.ui.activity.base.BaseActivity
 import com.google.android.material.textview.MaterialTextView
 import com.highcapable.yukihookapi.YukiHookAPI
@@ -47,7 +47,7 @@ data class StickerInfo(
 
 class RecyclerAdapterStickerList(val act: MainActivity) :
     RecyclerView.Adapter<RecyclerAdapterStickerList.ViewHolder>() {
-    var stickerList = mutableListOf<StickerInfo>()
+    var stickerList = listOf<StickerInfo>()
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val name = view.findViewById<android.widget.TextView>(R.id.sticker_name)
@@ -75,77 +75,49 @@ class RecyclerAdapterStickerList(val act: MainActivity) :
             pd.show()
             pd.setCancelable(false)
             thread(true) {
-                val remoteFolder = "${destDataPath}tgSync_${s.id}"
-                val syncedFolder = "${realDataPath}tgSync_${s.id}"
-                if (!File(syncedFolder).exists()) {
-                    File(syncedFolder).mkdirs()
-                }
+                val remoteFolder = "$destDataPath/tgSync_${s.id}"
+                val syncedFolder = "$realDataPath/tgSync_${s.id}"
+                File(syncedFolder).mkdirs()
 
-                val remoteFileList = File(remoteFolder).listFiles()
-                val syncedFileList = File(syncedFolder).listFiles()
-                fun findExistingFilesById(id: String): ArrayList<File> {
-                    val result = ArrayList<File>()
-                    if (syncedFileList != null) {
-                        for (file in syncedFileList) {
-                            if (file.name.startsWith(id)) {
-                                result.add(file)
-                            }
-                        }
-                    }
-                    return result
-                }
+                val remoteFileList = File(remoteFolder).listFiles() ?: emptyArray()
 
-                var index = 0
-                if (remoteFileList != null) {
-                    for (remoteFile in remoteFileList) {
-                        val nameWithoutExt =
-                            remoteFile.name.substring(0, remoteFile.name.indexOf("."))
-                        val id = nameWithoutExt.substring(0, nameWithoutExt.indexOf("_"))
-                        val outPathPng = "${syncedFolder}/${nameWithoutExt}.png"
-                        val outPathGif = "${syncedFolder}/${nameWithoutExt}.gif"
-                        val outPathWebp = "${syncedFolder}/${nameWithoutExt}.webp"
+                for ((index, remoteFile) in remoteFileList.withIndex()) {
+                    val nameWithoutExt = remoteFile.name.substringBefore(".")
+                    val id = nameWithoutExt.substringBefore("_")
+                    val outPathPng = "${syncedFolder}/${nameWithoutExt}.png"
+                    // val outPathGif = "${syncedFolder}/${nameWithoutExt}.gif"
+                    val outPathWebp = "${syncedFolder}/${nameWithoutExt}.webp"
 
-                        val existing = findExistingFilesById(id)
-                        if (existing.size == 0 || existing[0].name.endsWith(".webp")) {
-                            if (remoteFile.name.endsWith(".webp")) {
-                                val decoder = ImageDecoder.createSource(remoteFile)
-                                val bitmap = ImageDecoder.decodeBitmap(decoder)
-                                val out = File(outPathPng)
-                                if (!out.exists()) {
-                                    out.createNewFile()
-                                }
+                    val existing = File(syncedFolder).listFiles()?.filter { it.name.startsWith(id) }
+                        ?: emptyList()
+                    if (existing.isEmpty() || existing[0].name.endsWith(".webp")) {
+                        if (remoteFile.name.endsWith(".webp")) {
+                            val decoder = ImageDecoder.createSource(remoteFile)
+                            val bitmap = ImageDecoder.decodeBitmap(decoder)
+                            val out = File(outPathPng)
+                            out.outputStream().buffered().use {
                                 bitmap.compress(
                                     android.graphics.Bitmap.CompressFormat.PNG,
                                     100,
-                                    out.outputStream()
+                                    it
                                 )
-
-                                val fWebp = File(outPathWebp)
-                                if (fWebp.exists()) {
-                                    fWebp.delete()
-                                }
-
-                                for (file in existing) {
-                                    file.delete()
-                                }
-                            } else {
-                                remoteFile.copyTo(File("${syncedFolder}/${remoteFile.name}"), true)
                             }
-                        }
 
-                        index++
-                        act.runOnUiThread {
-                            pd.setMessage("正在同步 ${index}/${remoteFileList.size}")
+                            File(outPathWebp).delete()
+
+                            for (file in existing) {
+                                file.delete()
+                            }
+                        } else {
+                            remoteFile.copyTo(File("${syncedFolder}/${remoteFile.name}"), true)
                         }
                     }
+
+                    act.runOnUiThread { pd.setMessage("正在同步 ${index}/${remoteFileList.size}") }
                 }
-                act.runOnUiThread {
-                    pd.setMessage("正在更新列表")
-                }
+                act.runOnUiThread { pd.setMessage("正在更新列表") }
                 act.updateStickerList()
-                act.runOnUiThread {
-                    pd.dismiss()
-                }
+                act.runOnUiThread { pd.dismiss() }
             }
         }
 
@@ -162,7 +134,7 @@ class RecyclerAdapterStickerList(val act: MainActivity) :
                     pd.setCancelable(false)
                     Thread {
                         //                            val remoteFolder = "${destDataPath}tgSync_${s.id}"
-                        val syncedFolder = "${realDataPath}tgSync_${s.id}"
+                        val syncedFolder = "$realDataPath/tgSync_${s.id}"
                         //                            File(remoteFolder).deleteRecursively()
                         File(syncedFolder).deleteRecursively()
                         act.runOnUiThread {
@@ -187,31 +159,26 @@ class RecyclerAdapterStickerList(val act: MainActivity) :
 
 class MainActivity : BaseActivity<ActivityMainBinding>() {
 
-    private fun requestmanageexternalstorage_Permission() {
+    private fun requestPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             // 先判断有没有权限
             if (Environment.isExternalStorageManager()) {
-                //                Toast.makeText(
-                //                    this,
-                //                    "Android VERSION  R OR ABOVE，HAVE MANAGE_EXTERNAL_STORAGE GRANTED!",
-                //                    Toast.LENGTH_LONG
-                //                ).show()
                 onGainedPermission()
-            } else {
-                Toast.makeText(
-                    this,
-                    "请授予插件完全文件访问权限，以同步表情包~",
-                    Toast.LENGTH_LONG
-                ).show()
-                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-                intent.setData(Uri.parse("package:" + this.packageName))
-                @Suppress("DEPRECATION")
-                startActivityForResult(intent, 2339)
+                return
             }
+            Toast.makeText(
+                this,
+                "请授予插件完全文件访问权限，以同步表情包~",
+                Toast.LENGTH_LONG
+            ).show()
+            @Suppress("DEPRECATION")
+            startActivityForResult(Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                data = Uri.parse("package:" + this@MainActivity.packageName)
+            }, 2339)
         }
     }
 
-    fun onGainedPermission() {
+    private fun onGainedPermission() {
         Toast.makeText(
             this,
             "权限获取成功，可以同步表情包啦~",
@@ -221,27 +188,29 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         updateStickerList()
     }
 
+    @Deprecated("Deprecated in Java")
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 2339) {
             if (Environment.isExternalStorageManager()) {
                 onGainedPermission()
-            } else {
-                Toast.makeText(
-                    this,
-                    "请授予插件完全文件访问权限，以同步表情包~",
-                    Toast.LENGTH_LONG
-                ).show()
-                requestmanageexternalstorage_Permission()
+                return
             }
+            Toast.makeText(
+                this,
+                "请授予插件完全文件访问权限，以同步表情包~",
+                Toast.LENGTH_LONG
+            ).show()
+            requestPermission()
         }
 
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     override fun onCreate() {
         refreshModuleStatus()
-        requestmanageexternalstorage_Permission()
+        requestPermission()
         binding.mainTextVersion.text = getString(R.string.module_version, BuildConfig.VERSION_NAME)
         binding.button2.setOnClickListener {
             binding.tips.visibility = View.GONE
@@ -249,19 +218,44 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         }
 
         binding.resetBtn.setOnClickListener {
-            val pd = ProgressDialog(this)
-            pd.setMessage("正在清除")
-            pd.show()
-            pd.setCancelable(false)
-            Thread {
-                File(dPath).deleteRecursively()
-                updateStickerList()
-                pd.dismiss()
-            }.start()
+            AlertDialog.Builder(this)
+                .setTitle("删除已同步的表情包集")
+                .setMessage("你将删除已同步的表情包集，这将会删除 ${this.stickerList.value?.size} 个表情包，是否继续？")
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setPositiveButton("删除") { _, _ ->
+                    val pd = ProgressDialog(this).apply {
+                        setMessage("正在清除")
+                        show()
+                        setCancelable(false)
+                    }
+                    thread(true) {
+                        File(exposedPath).deleteRecursively()
+                        pd.dismiss()
+                    }
+                }
+                .setNegativeButton("算了", null).show()
         }
 
-        binding.stickerManageView.layoutManager =
-            androidx.recyclerview.widget.LinearLayoutManager(this)
+        binding.refreshBtn.setOnClickListener {
+            val pd = ProgressDialog(this).apply {
+                setMessage("正在更新")
+                show()
+                setCancelable(false)
+            }
+            thread(true) {
+                updateStickerList()
+                pd.dismiss()
+                runOnUiThread {
+                    Toast.makeText(
+                        this,
+                        "共刷新${this.stickerList.value?.size ?: 0}个贴纸包",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+
+        binding.stickerManageView.layoutManager = LinearLayoutManager(this)
         binding.stickerManageView.adapter = RecyclerAdapterStickerList(this)
 
         stickerList.observe(this) {
@@ -270,34 +264,30 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                 binding.stickerManageView.adapter?.notifyDataSetChanged()
             }
         }
-
-        thread(true) {
-            while (true) {
-                Thread.sleep(2000)
-                updateStickerList()
-            }
-        }
     }
 
-    val stickerList: MutableLiveData<MutableList<StickerInfo>> by lazy {
-        MutableLiveData<MutableList<StickerInfo>>(mutableListOf())
+    override fun onResume() {
+        super.onResume()
+        refreshModuleStatus()
+    }
+
+    private val stickerList by lazy {
+        MutableLiveData<List<StickerInfo>>(listOf())
     }
 
     fun updateStickerList() {
-        YLog.info("start")
-        //        YLog.debug("Root read test: ${File("/storage/emulated/0").listFiles().size}")
-        if (!File(tgseDataPath).exists()) {
-            this.stickerList.postValue(mutableListOf())
+        if (!File(tgspDataPath).exists()) {
+            this.stickerList.postValue(listOf())
             return
         }
 
-        val ignoreIds = File("$dPath/ignore.txt").run {
+        val ignoreIds = File("$exposedPath/ignore.txt").run {
             if (exists()) readLines().filterNot { it.startsWith("#") }
             else {
                 writeText(
                     """# write the ignored sticker IDs here
-                    |# separate with line breaks
-                """.trimMargin()
+                        |# separate with line breaks
+                    """.trimMargin()
                 )
                 emptyList()
             }
@@ -305,7 +295,8 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         YLog.info("ignoreIds: [${ignoreIds.joinToString { "`$it`" }}]")
 
         val stickerList = mutableListOf<StickerInfo>()
-        for (file in File(stickerDataPath).listFiles() ?: return) {
+
+        for (file in File(stickerDataPath).listFiles()!!) {
             try {
                 val hash = file.name
                 if (!file.name.endsWith(".stickerData.txt.jpg")) continue
@@ -320,36 +311,24 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                 val remoteState = StickerState(0, 0, 0)
                 val syncedState = StickerState(0, 0, 0)
 
-                val remoteFolder = "${destDataPath}tgSync_${id}"
-                if (File(remoteFolder).exists()) {
-                    val remoteFileList = File(remoteFolder).listFiles()
-                    if (remoteFileList != null) {
-                        for (remoteFile in remoteFileList) {
-                            if (remoteFile.name.endsWith("_low.webp")) {
-                                remoteState.lowQuality++
-                            } else if (remoteFile.name.endsWith("_high.webp")) {
-                                remoteState.highQuality++
-                            }
-
-                            remoteState.all++
-                        }
+                File("$destDataPath/tgSync_$id").listFiles()?.forEach {
+                    if (it.name.endsWith("_low.webp")) {
+                        remoteState.lowQuality++
+                    } else if (it.name.endsWith("_high.webp")) {
+                        remoteState.highQuality++
                     }
+
+                    remoteState.all++
                 }
 
-                val syncedFolder = "${realDataPath}tgSync_${id}"
-                if (File(syncedFolder).exists()) {
-                    val syncedFileList = File(syncedFolder).listFiles()
-                    if (syncedFileList != null) {
-                        for (syncedFile in syncedFileList) {
-                            if (syncedFile.name.contains("_low.")) {
-                                syncedState.lowQuality++
-                            } else if (syncedFile.name.contains("_high.")) {
-                                syncedState.highQuality++
-                            }
-
-                            syncedState.all++
-                        }
+                File("$realDataPath/tgSync_${id}").listFiles()?.forEach {
+                    if (it.name.contains("_low.")) {
+                        syncedState.lowQuality++
+                    } else if (it.name.contains("_high.")) {
+                        syncedState.highQuality++
                     }
+
+                    syncedState.all++
                 }
 
                 stickerList.add(StickerInfo(name, id, hash, remoteState, syncedState, allSize))
@@ -365,58 +344,22 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     }
 
     /**
-     * Hide or show launcher icons
-     * - You may need the latest version of LSPosed to enable the function of
-     *   hiding launcher icons in higher version systems
-     *
-     * 隐藏或显示启动器图标
-     * - 你可能需要 LSPosed 的最新版本以开启高版本系统中隐藏 APP 桌面图标功能
-     *
-     * @param isShow Whether to display / 是否显示
-     */
-    private fun hideOrShowLauncherIcon(isShow: Boolean) {
-        packageManager?.setComponentEnabledSetting(
-            ComponentName(packageName, "${BuildConfig.APPLICATION_ID}.Home"),
-            if (isShow) PackageManager.COMPONENT_ENABLED_STATE_DISABLED else PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-            PackageManager.DONT_KILL_APP
-        )
-    }
-
-    /**
-     * Get launcher icon state
-     *
-     * 获取启动器图标状态
-     *
-     * @return [Boolean] Whether to display / 是否显示
-     */
-    private val isLauncherIconShowing
-        get() = packageManager?.getComponentEnabledSetting(
-            ComponentName(packageName, "${BuildConfig.APPLICATION_ID}.Home")
-        ) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-
-    /**
      * Refresh module status
      *
      * 刷新模块状态
      */
     private fun refreshModuleStatus() {
         binding.mainLinStatus.setBackgroundResource(
-            when {
-                YukiHookAPI.Status.isModuleActive -> R.drawable.bg_green_round
-                else -> R.drawable.bg_dark_round
-            }
+            if (YukiHookAPI.Status.isModuleActive) R.drawable.bg_green_round
+            else R.drawable.bg_dark_round
         )
         binding.mainImgStatus.setImageResource(
-            when {
-                YukiHookAPI.Status.isModuleActive -> R.mipmap.ic_success
-                else -> R.mipmap.ic_warn
-            }
+            if (YukiHookAPI.Status.isModuleActive) R.mipmap.ic_success
+            else R.mipmap.ic_warn
         )
         binding.mainTextStatus.text = getString(
-            when {
-                YukiHookAPI.Status.isModuleActive -> R.string.module_is_activated
-                else -> R.string.module_not_activated
-            }
+            if (YukiHookAPI.Status.isModuleActive) R.string.module_is_activated
+            else R.string.module_not_activated
         )
     }
 }

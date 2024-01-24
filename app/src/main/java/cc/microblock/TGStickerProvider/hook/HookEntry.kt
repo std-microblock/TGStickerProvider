@@ -1,5 +1,6 @@
 package cc.microblock.TGStickerProvider.hook
 
+import android.annotation.SuppressLint
 import android.database.CursorWindow
 import android.database.sqlite.SQLiteDatabase
 import android.os.Build
@@ -12,7 +13,7 @@ import cc.microblock.TGStickerProvider.nomediaPath
 import cc.microblock.TGStickerProvider.nomediaPath2
 import cc.microblock.TGStickerProvider.stickerDataPath
 import cc.microblock.TGStickerProvider.syncFlagsPath
-import cc.microblock.TGStickerProvider.tgseDataPath
+import cc.microblock.TGStickerProvider.tgspDataPath
 import cc.microblock.TGStickerProvider.utils.CachePathHelper.getCachePath
 import com.highcapable.yukihookapi.annotation.xposed.InjectYukiHookWithXposed
 import com.highcapable.yukihookapi.hook.factory.configs
@@ -27,6 +28,7 @@ import kotlin.concurrent.thread
 @InjectYukiHookWithXposed(entryClassName = "TGStickerProvider", isUsingXposedModuleStatus = true)
 class HookEntry : IYukiHookXposedInit {
 
+    @SuppressLint("DiscouragedPrivateApi")
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onInit() = configs {
         debugLog {
@@ -37,13 +39,14 @@ class HookEntry : IYukiHookXposedInit {
         // Fix cannot read database that is larger than 2MB
         try {
             val field: Field = CursorWindow::class.java.getDeclaredField("sCursorWindowSize")
-            field.setAccessible(true)
+            field.isAccessible = true
             field.set(null, 100 * 1024 * 1024) // 100MB is the new size
-        } catch (e: java.lang.Exception) {
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
+    @SuppressLint("SdCardPath")
     override fun onHook() = encase {
         if (this.packageName.startsWith("android")) return@encase
 
@@ -53,8 +56,8 @@ class HookEntry : IYukiHookXposedInit {
             val dataPath = "/data/data/${this.packageName}/"
             val tgCachePath = getCachePath(this.appContext, this.packageName)
 
-            if (!File(tgseDataPath).exists()) {
-                File(tgseDataPath).mkdirs()
+            if (!File(tgspDataPath).exists()) {
+                File(tgspDataPath).mkdirs()
                 File(stickerDataPath).mkdirs()
                 File(syncFlagsPath).mkdirs()
                 File(destDataPath).mkdirs()
@@ -82,10 +85,6 @@ class HookEntry : IYukiHookXposedInit {
 
                             val cursor =
                                 cache4DBConn.rawQuery("SELECT id,data,hash FROM $sheetName", null)
-
-                            fun doSync(hash: Int): Boolean {
-                                return true
-                            }
 
                             while (cursor.moveToNext()) {
                                 val data = cursor.getBlob(1)
@@ -136,9 +135,6 @@ class HookEntry : IYukiHookXposedInit {
                                                         continue
                                                     }
                                                 }
-
-                                                if (!doSync(hash)) continue
-
 
                                                 var fullSync = true
                                                 val destDir =
@@ -194,12 +190,12 @@ class HookEntry : IYukiHookXposedInit {
                                                 if (fullSync) ignoreSet.add(stickerSet.set.hash)
 
                                             } catch (e: Exception) {
-                                                YLog.debug(e.toString())
+                                                YLog.warn("", e)
                                                 continue
                                             }
                                         }
                                     } catch (e: Exception) {
-                                        YLog.debug(e.toString())
+                                        YLog.warn("", e)
                                         return
                                     }
                                 }
@@ -221,13 +217,10 @@ class HookEntry : IYukiHookXposedInit {
                     checkDbSheets("${dataPath}/files/cache4.db")
 
                     // Separate DBs for each account
-                    val accountDirs = File(dataPath + "/files/").listFiles().filter {
+                    File("$dataPath/files/").listFiles()?.filter {
                         it.isDirectory && it.name.startsWith("account")
-                    }
-
-                    for (accountDir in accountDirs) {
-                        val accountDataPath = accountDir.path
-                        checkDbSheets("${accountDataPath}/cache4.db")
+                    }?.forEach {
+                        checkDbSheets("${it.path}/cache4.db")
                     }
                 } catch (e: Exception) {
                     YLog.debug(e.toString())

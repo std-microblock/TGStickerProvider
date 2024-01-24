@@ -111,7 +111,7 @@
                 android:alpha="0.8"
                 android:ellipsize="end"
                 android:singleLine="true"
-                android:text="Telegram 表情导出器 | 与 QAuxiliary 配合使用"
+                android:text="@string/info"
                 android:textColor="@color/white"
                 android:textSize="13sp" />
 
@@ -142,7 +142,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="使用方法：\n1. 注入你的 Telegram\n2.打开 Telegram, 看两眼你要同步的表情包\n3. 回到本页面，点击“得行”，同步你需要的表情包\n\n其他注意事项：\n有两种质量的图（低清，高清），低清图看一眼就可以获得缓存，高清图得发一次（在同步界面有提示，格式为：总数-l低清数量-h高清数量）；\n如果有问题在我群里反馈~\n\n不建议同步涉政之类的表情包过去" />
+            android:text="@string/usage" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -154,21 +154,16 @@
 
             <Button
                 android:id="@+id/button2"
-                android:layout_width="314dp"
-                android:layout_height="58dp"
-                android:layout_weight="1"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:backgroundTint="#656565"
-                android:text="得行"
+                android:text="@string/ok"
                 android:textColor="#fff"
                 android:textSize="20sp"
                 tools:text="得行" />
         </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="horizontal"></LinearLayout>
 
     </LinearLayout>
 
@@ -184,21 +179,33 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="horizontal">
 
             <Button
                 android:id="@+id/resetBtn"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="重置表情包缓存"
+                android:text="@string/reset_sticker"
+                android:textColor="#fff" />
+
+            <View
+                android:layout_width="10dp"
+                android:layout_height="1dp"/>
+
+            <Button
+                android:id="@+id/refreshBtn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/refresh_sticker"
                 android:textColor="#fff" />
         </LinearLayout>
 
         <TextView
             android:id="@+id/textView"
+            android:layout_margin="10dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="表情包列表" />
+            android:text="@string/sticker_list" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/stickerManageView"
