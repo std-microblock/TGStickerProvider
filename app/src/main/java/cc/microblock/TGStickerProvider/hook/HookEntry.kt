@@ -46,7 +46,7 @@ class HookEntry : IYukiHookXposedInit {
     override fun onHook() = encase {
         if(this.packageName.startsWith("android")) return@encase;
 
-        val ignoreSet = HashSet<Number>();
+        val ignoreSet = HashSet<Int>();
         Thread {
             Thread.sleep(1000);
             val dataPath = "/data/data/${this.packageName}/";
@@ -67,7 +67,7 @@ class HookEntry : IYukiHookXposedInit {
                 try {
                     fun checkDb(dbPath: String, sheetName: String): Boolean {
                         val cache4DB = File(dbPath);
-                        val dedupSet = HashSet<Number>();
+                        val dedupSet = HashSet<Int>();
                         if (cache4DB.exists()) {
                             val cache4DBConn = SQLiteDatabase.openDatabase(
                                 cache4DB.path,
@@ -78,7 +78,7 @@ class HookEntry : IYukiHookXposedInit {
                             val cursor =
                                 cache4DBConn.rawQuery("SELECT id,data,hash FROM $sheetName", null);
 
-                            fun doSync(hash: Number): Boolean {
+                            fun doSync(hash: Int): Boolean {
                                 return true;
                             }
 
