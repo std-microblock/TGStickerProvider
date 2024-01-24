@@ -14,9 +14,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppDefault"
         tools:targetApi="31">
-        <activity
-            android:name=".hook.SAFAgentActivity"
-            android:exported="true" />
 
         <meta-data
             android:name="xposedmodule"
