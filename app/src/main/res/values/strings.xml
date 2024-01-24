@@ -15,4 +15,6 @@
     <string name="ok">OK</string>
     <string name="usage">使用方法：\n1. 注入你的 Telegram\n2.打开 Telegram, 看两眼你要同步的表情包(等待表情加载完并显示)\n3. 回到本页面，点击"得行"，同步你需要的表情包\n\n其他注意事项：\n有两种质量的图（低清，高清），低清图看一眼就可以获得缓存，高清图得发一次（在同步界面有提示，格式为：总数-l低清数量-h高清数量）；\n如果有问题在我群里反馈~\n\n不建议同步涉政之类的表情包过去</string>
     <string name="info">Telegram 表情导出器 | 与 QAuxiliary 配合使用</string>
+    <string name="sync">sync</string>
+    <string name="remove">×</string>
 </resources>

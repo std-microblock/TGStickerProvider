@@ -12,14 +12,15 @@
         android:layout_marginStart="1dp"
         android:maxWidth="330dp"
         android:orientation="vertical"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        tools:ignore="MissingConstraints">
 
         <TextView
             android:id="@+id/sticker_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:maxHeight="16sp"
-            android:text="TextView"
+            android:text=""
             android:textColor="@color/colorPrimaryAccent"
             android:textSize="12sp" />
 
@@ -28,14 +29,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:maxHeight="18sp"
-            android:text="TextView"
+            android:text=""
             android:textSize="16sp" />
 
         <TextView
             android:id="@+id/syncState"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="TextView"
+            android:text=""
             android:textSize="12sp" />
 
     </LinearLayout>
@@ -50,7 +51,7 @@
         android:backgroundTint="#656565"
         android:insetLeft="2dp"
         android:insetRight="2dp"
-        android:text="同步"
+        android:text="@string/sync"
         android:textColor="#fff"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -63,7 +64,7 @@
         android:layout_marginEnd="4dp"
         android:background="@drawable/rounded_corner"
         android:clickable="true"
-        android:text="×"
+        android:text="@string/remove"
         android:textAlignment="center"
         android:textColor="#fff"
         android:textSize="24sp"
