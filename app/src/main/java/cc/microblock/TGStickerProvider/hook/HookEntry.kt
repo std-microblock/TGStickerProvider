@@ -10,6 +10,7 @@ import cc.microblock.TGStickerProvider.destDataPath
 import cc.microblock.TGStickerProvider.hook.TelegramTLParser.SerializedData
 import cc.microblock.TGStickerProvider.hook.TelegramTLParser.TLRPC
 import cc.microblock.TGStickerProvider.nomediaPath
+import cc.microblock.TGStickerProvider.nomediaPath2
 import cc.microblock.TGStickerProvider.stickerDataPath
 import cc.microblock.TGStickerProvider.syncFlagsPath
 import cc.microblock.TGStickerProvider.tgseDataPath
@@ -61,6 +62,10 @@ class HookEntry : IYukiHookXposedInit {
 
             if (!File(nomediaPath).exists()) {
                 File(nomediaPath).createNewFile();
+            }
+
+            if (!File(nomediaPath2).exists()) {
+                File(nomediaPath2).createNewFile();
             }
 
             while (true) {

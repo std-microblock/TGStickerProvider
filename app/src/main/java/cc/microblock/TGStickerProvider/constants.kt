@@ -7,3 +7,4 @@ val tgseDataPath: String get () = "${dPath}mb_TGSPData/";
 val stickerDataPath: String get () =  "${tgseDataPath}sticker/";
 val syncFlagsPath: String get () = "${tgseDataPath}stickerSyncFlags/";
 val nomediaPath: String get () = "${dPath}.nomedia";
+val nomediaPath2: String get () = "${realDataPath}.nomedia";
