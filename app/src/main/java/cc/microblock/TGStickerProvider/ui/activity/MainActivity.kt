@@ -129,23 +129,18 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
                 .setTitle("删除已同步的表情包集 ${s.name}")
                 .setMessage("你将删除已同步的表情包集 ${s.name}，这将会删除 ${s.syncedState.all} 个表情包文件，是否继续？")
                 .setIcon(android.R.drawable.ic_dialog_alert)
-                .setPositiveButton("删除") { dialog, whichButton ->
+                .setPositiveButton("删除") { _, _ ->
                     val pd = ProgressDialog(act)
                     pd.setMessage("正在删除")
                     pd.show()
                     pd.setCancelable(false)
                     Thread {
-                        //                            val remoteFolder = "${destDataPath}tgSync_${s.id}"
-                        val syncedFolder = "$realDataPath/tgSync_${s.id}"
-                        //                            File(remoteFolder).deleteRecursively()
-                        File(syncedFolder).deleteRecursively()
-                        act.runOnUiThread {
-                            pd.setMessage("正在更新列表")
-                        }
+                        // val remoteFolder = "${destDataPath}tgSync_${s.id}"
+                        // File(remoteFolder).deleteRecursively()
+                        File("$realDataPath/tgSync_${s.id}").deleteRecursively()
+                        act.runOnUiThread { pd.setMessage("正在更新列表") }
                         act.updateStickerList()
-                        act.runOnUiThread {
-                            pd.dismiss()
-                        }
+                        act.runOnUiThread { pd.dismiss() }
                     }.start()
                 }
                 .setNegativeButton("算了", null).show()
@@ -232,6 +227,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                     }
                     thread(true) {
                         File(exposedPath).deleteRecursively()
+                        this.stickerList.postValue(listOf())
                         pd.dismiss()
                     }
                 }
