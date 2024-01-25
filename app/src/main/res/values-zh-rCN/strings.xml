@@ -10,8 +10,8 @@
     <string name="hide_app_icon_on_launcher">在桌面隐藏模块图标</string>
     <string name="hide_app_icon_on_launcher_tip">隐藏模块图标后界面可能会被关闭，将不会再在桌面显示，你可以在 EdXposed、LSPosed 中找到模块设置并打开。</string>
     <string name="hide_app_icon_on_launcher_notice">注意：请务必在 LSPosed 中关闭“强制显示桌面图标”功能</string>
-    <string name="reset_sticker">重置表情包</string>
-    <string name="refresh_sticker">刷新表情包</string>
+    <string name="reset_sticker">清除表情包导出缓存</string>
+    <string name="refresh_sticker">刷新表情包列表</string>
     <string name="sticker_list">表情包列表</string>
     <string name="ok">得行</string>
     <string name="usage">使用方法：\n1. 注入你的 Telegram\n2.打开 Telegram, 看两眼你要同步的表情包(等待表情加载完并显示)\n3. 回到本页面，点击"得行"，同步你需要的表情包\n\n其他注意事项：\n有两种质量的图（低清，高清），低清图看一眼就可以获得缓存，高清图得发一次（在同步界面有提示，格式为：总数-l低清数量-h高清数量）；\n如果有问题在我群里反馈~\n\n不建议同步涉政之类的表情包过去</string>

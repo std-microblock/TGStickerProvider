@@ -216,8 +216,8 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
         binding.resetBtn.setOnClickListener {
             AlertDialog.Builder(this)
-                .setTitle("删除已同步的表情包集")
-                .setMessage("你将删除已同步的表情包集，这将会删除 ${this.stickerList.value?.size} 个表情包，是否继续？")
+                .setTitle("清除已同步的表情包集缓存")
+                .setMessage("你将清除导出表情包集的缓存，这不会影响已同步的表情包，是否继续？")
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setPositiveButton("删除") { _, _ ->
                     val pd = ProgressDialog(this).apply {
