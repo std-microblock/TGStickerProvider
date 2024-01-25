@@ -1,7 +1,7 @@
 ![header](./header.png)
 
 ## Telegram Stickers Provider
-A Xposed/LSPosed plugin to dump stickers from Telegram to QQ. Almost all 3rd-party telegram clients are supported.
+A Xposed/LSPosed plugin to dump stickers from Telegram. Almost all 3rd-party telegram clients are supported.
 
 ![screenshot](./screenshot.jpg)
 

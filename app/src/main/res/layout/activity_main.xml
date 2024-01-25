@@ -134,6 +134,13 @@
             android:layout_height="wrap_content"
             android:text="@string/usage" />
 
+        <TextView
+            android:id="@+id/textView3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/big_tips"
+            android:textSize="34sp" />
+
         <Button
             android:id="@+id/button2"
             android:layout_marginLeft="50dp"
