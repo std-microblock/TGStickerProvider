@@ -26,6 +26,7 @@ import cc.microblock.TGStickerProvider.R
 import cc.microblock.TGStickerProvider.databinding.ActivityMainBinding
 import cc.microblock.TGStickerProvider.destDataPath
 import cc.microblock.TGStickerProvider.exposedPath
+import cc.microblock.TGStickerProvider.nomediaPath2
 import cc.microblock.TGStickerProvider.realDataPath
 import cc.microblock.TGStickerProvider.stickerDataPath
 import cc.microblock.TGStickerProvider.tgspDataPath
@@ -80,6 +81,10 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
                 val remoteFolder = "$destDataPath/tgSync_${s.id}"
                 val syncedFolder = "$realDataPath/tgSync_${s.id}"
                 File(syncedFolder).mkdirs()
+
+                if (!File(nomediaPath2).exists()) {
+                    File(nomediaPath2).createNewFile()
+                }
 
                 val remoteFileList = File(remoteFolder).listFiles() ?: emptyArray()
 

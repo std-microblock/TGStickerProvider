@@ -67,10 +67,6 @@ class HookEntry : IYukiHookXposedInit {
                 File(nomediaPath).createNewFile()
             }
 
-            if (!File(nomediaPath2).exists()) {
-                File(nomediaPath2).createNewFile()
-            }
-
             while (true) {
                 try {
                     fun checkDb(dbPath: String, sheetName: String): Boolean {
