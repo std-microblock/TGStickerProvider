@@ -3,7 +3,7 @@
     <string name="xposed_desc">从 Telegram 数据库中提取表情包</string>
     <string name="about_module">This module is made by YukiHookAPI. \nLearn more https://github.com/HighCapable/YuKiHookAPI</string>
     <string name="module_version">Module version: %1$s</string>
-    <string name="module_not_activated">Module not activated</string>
+    <string name="module_not_activated">Module is probably activated</string>
     <string name="module_is_activated">Module is activated</string>
     <string name="display_settings">Display settings</string>
     <string name="hide_app_icon_on_launcher">Hide app icons on launcher</string>
