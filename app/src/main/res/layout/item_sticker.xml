@@ -43,7 +43,7 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="200dp"
             android:layout_height="match_parent"
-            android:visibility="gone">
+            android:visibility="visible">
 
             <TextView
                 android:layout_width="24dp"
