@@ -284,16 +284,21 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             return
         }
 
-        val ignoreIds = File("$exposedPath/ignore.txt").run {
-            if (exists()) readLines().filterNot { it.startsWith("#") }
-            else {
-                writeText(
-                    """# write the ignored sticker IDs here
-                        |# separate with line breaks
-                    """.trimMargin()
-                )
-                emptyList()
+        val ignoreIds = try { 
+            File("$exposedPath/ignore.txt").run {
+                if (exists()) readLines().filterNot { it.startsWith("#") }
+                else {
+                    writeText(
+                        """# write the ignored sticker IDs here
+                            |# separate with line breaks
+                        """.trimMargin()
+                    )
+                    emptyList()
+                }
             }
+        } catch (e: Exception) {
+            YLog.error("Error while reading ignore.txt", e)
+            emptyList()
         }
         YLog.info("ignoreIds: [${ignoreIds.joinToString { "`$it`" }}]")
 
