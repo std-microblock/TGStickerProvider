@@ -78,7 +78,7 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
         holder.syncedStatus.text = "低清 ${s.syncedState.lowQuality}\n高清 ${s.syncedState.highQuality}"
         holder.exportedAll.text = s.remoteState.all.toString()
         holder.exportedStatus.text = "低清 ${s.remoteState.lowQuality}\n高清 ${s.remoteState.highQuality}"
-        holder.totalAll.text = s.syncedState.all.toString();
+        holder.totalAll.text = s.all.toString();
 
         holder.syncBtn.setOnClickListener {
             val pd = ProgressDialog(act)
