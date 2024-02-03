@@ -55,7 +55,11 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val name: TextView = view.findViewById(R.id.sticker_name)
         val id: TextView = view.findViewById(R.id.sticker_id)
-        val syncState: TextView = view.findViewById(R.id.syncState)
+        val syncedAll: TextView = view.findViewById(R.id.syncedAll)
+        val syncedStatus: TextView = view.findViewById(R.id.syncedStatus)
+        val exportedAll: TextView = view.findViewById(R.id.exportedAll)
+        val exportedStatus: TextView = view.findViewById(R.id.exportedStatus)
+        val totalAll: TextView = view.findViewById(R.id.totalAll)
         val syncBtn: Button = view.findViewById(R.id.syncBtn)
         val rmBtn: MaterialTextView = view.findViewById(R.id.rmBtn)
     }
@@ -70,8 +74,12 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
         val s = stickerList[position]
         holder.name.text = s.name
         holder.id.text = s.id
-        holder.syncState.text =
-            "同步 ${s.syncedState.all}-l${s.syncedState.lowQuality}-h${s.syncedState.highQuality} / 缓存 ${stickerList[position].remoteState.all}-l${s.remoteState.lowQuality}-h${s.remoteState.highQuality} / 总 ${s.all}"
+        holder.syncedAll.text = s.syncedState.all.toString();
+        holder.syncedStatus.text = "低清 ${s.syncedState.lowQuality}\n高清 ${s.syncedState.highQuality}"
+        holder.exportedAll.text = s.remoteState.all.toString()
+        holder.exportedStatus.text = "低清 ${s.remoteState.lowQuality}\n高清 ${s.remoteState.highQuality}"
+        holder.totalAll.text = s.syncedState.all.toString();
+
         holder.syncBtn.setOnClickListener {
             val pd = ProgressDialog(act)
             pd.setMessage("正在同步")
@@ -284,7 +292,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             return
         }
 
-        val ignoreIds = try { 
+        val ignoreIds = try {
             File("$exposedPath/ignore.txt").run {
                 if (exists()) readLines().filterNot { it.startsWith("#") }
                 else {
