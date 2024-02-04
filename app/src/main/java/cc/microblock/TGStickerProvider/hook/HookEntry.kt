@@ -3,6 +3,7 @@ package cc.microblock.TGStickerProvider.hook
 import android.annotation.SuppressLint
 import android.database.CursorWindow
 import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteOpenHelper
 import android.os.Build
 import androidx.annotation.RequiresApi
 import cc.microblock.TGStickerProvider.BuildConfig
@@ -69,6 +70,7 @@ class HookEntry : IYukiHookXposedInit {
 
             while (true) {
                 try {
+                    @RequiresApi(Build.VERSION_CODES.O_MR1)
                     fun checkDb(dbPath: String, sheetName: String): Boolean {
                         val cache4DB = File(dbPath)
                         val dedupSet = HashSet<Int>()
@@ -81,6 +83,8 @@ class HookEntry : IYukiHookXposedInit {
 
                             val cursor =
                                 cache4DBConn.rawQuery("SELECT id,data,hash FROM $sheetName", null)
+
+                            val stickerSets = ArrayList<TLRPC.TL_messages_stickerSet>()
 
                             while (cursor.moveToNext()) {
                                 val data = cursor.getBlob(1)
@@ -112,116 +116,121 @@ class HookEntry : IYukiHookXposedInit {
                                             val hash = stickerSet.set.hash
                                             if (dedupSet.contains(hash)) continue
                                             dedupSet.add(hash)
-
-                                            // use .txt.jpg to bypass the file type check in android 11+
-                                            val stickerNameFile =
-                                                File(
-                                                    stickerDataPath,
-                                                    "${stickerSet.set.hash}.stickerData.txt.jpg"
-                                                )
-                                            try {
-                                                File(stickerDataPath).mkdirs()
-                                                stickerNameFile.createNewFile()
-                                                stickerNameFile.writeText(
-                                                    stickerSet.set.short_name + "\n" +
-                                                            stickerSet.set.title + "\n" +
-                                                            stickerSet.set.count + "\n" +
-                                                            stickerSet.documents[0]?.mime_type
-                                                )
-                                            } catch (e: Exception) {
-                                                YLog.error(e.toString())
-                                                // has occupied by another app
-                                                continue
-                                            }
-
-                                            var fullSync = true
-                                            val destDir =
-                                                "${destDataPath}/tgSync_${stickerSet.set.short_name}"
-                                            File(destDir).mkdirs()
-
-                                            var lowQualityCount = 0
-                                            var highQualityCount = 0
-                                            var printLog =
-                                                false // only print log if there is a new sticker
-
-                                            for (sticker in stickerSet.documents) {
-                                                when(sticker.mime_type) {
-                                                    "image/webp" -> {
-                                                        val localPath =
-                                                            "${sticker.dc_id}_${sticker.id}.webp"
-                                                        val localPathLowQuality =
-                                                            "-${sticker.id}_1109.webp"
-                                                        val stickerFile = File(tgCachePath, localPath)
-                                                        val destFile =
-                                                            File(destDir, "${sticker.id}_high.webp")
-                                                        val destFileLowQuality =
-                                                            File(destDir, "${sticker.id}_low.webp")
-
-                                                        if (stickerFile.exists()) {
-                                                            highQualityCount++
-                                                            if (!destFile.exists()) {
-                                                                printLog = true
-                                                                stickerFile.copyTo(destFile)
-                                                                if (destFileLowQuality.exists()) {
-                                                                    destFileLowQuality.delete()
-                                                                }
-                                                            }
-                                                        } else if (File(
-                                                                tgCachePath,
-                                                                localPathLowQuality
-                                                            ).exists()
-                                                        ) {
-                                                            lowQualityCount++
-                                                            if (!destFileLowQuality.exists() && !destFile.exists()) {
-                                                                printLog = true
-                                                                File(
-                                                                    tgCachePath,
-                                                                    localPathLowQuality
-                                                                ).copyTo(destFileLowQuality)
-                                                            }
-                                                        } else {
-                                                            if (!destFile.exists()) fullSync = false
-                                                        }
-                                                    }
-                                                    "video/webm" -> {
-                                                        val localPath =
-                                                            "${sticker.dc_id}_${sticker.id}.webm"
-                                                        val stickerFile = File(tgCachePath, localPath)
-                                                        val destFile =
-                                                            File(destDir, "${sticker.id}_high.webm")
-                                                        if (stickerFile.exists()) {
-                                                            highQualityCount++
-                                                            if (!destFile.exists()) {
-                                                                printLog = true
-                                                                stickerFile.copyTo(destFile)
-                                                            }
-                                                        }
-                                                    }
-                                                    else -> {
-
-                                                        YLog.debug("Unknown mime_type: ${sticker.mime_type}")
-                                                        continue;
-                                                    }
-                                                }
-                                            }
-
-                                            if (printLog)
-                                                YLog.debug("*new* [${lowQualityCount + highQualityCount}(Low$lowQualityCount High${highQualityCount})/${stickerSet.set.count}] ${stickerSet.set.title} ${stickerSet.set.short_name} ${stickerSet.set.count} ${stickerSet.set.hash}")
-                                            if (fullSync) ignoreSet.add(stickerSet.set.hash)
-
+                                            stickerSets.add(stickerSet)
                                         } catch (e: Exception) {
                                             YLog.warn("", e)
                                             continue
                                         }
                                     }
+
+
                                 } catch (e: Exception) {
                                     YLog.warn("", e)
                                     continue
                                 }
 
                             }
+
                             cursor.close()
                             cache4DBConn.close()
+
+                            for (stickerSet in stickerSets) {
+                                // use .txt.jpg to bypass the file type check in android 11+
+                                val stickerNameFile =
+                                    File(
+                                        stickerDataPath,
+                                        "${stickerSet.set.hash}.stickerData.txt.jpg"
+                                    )
+                                try {
+                                    File(stickerDataPath).mkdirs()
+                                    stickerNameFile.createNewFile()
+                                    stickerNameFile.writeText(
+                                        stickerSet.set.short_name + "\n" +
+                                                stickerSet.set.title + "\n" +
+                                                stickerSet.set.count + "\n" +
+                                                stickerSet.documents[0]?.mime_type
+                                    )
+                                } catch (e: Exception) {
+                                    YLog.error(e.toString())
+                                    // has occupied by another app
+                                    continue
+                                }
+
+                                var fullSync = true
+                                val destDir =
+                                    "${destDataPath}/tgSync_${stickerSet.set.short_name}"
+                                File(destDir).mkdirs()
+
+                                var lowQualityCount = 0
+                                var highQualityCount = 0
+                                var printLog =
+                                    false // only print log if there is a new sticker
+
+                                for (sticker in stickerSet.documents) {
+                                    when(sticker.mime_type) {
+                                        "image/webp" -> {
+                                            val localPath =
+                                                "${sticker.dc_id}_${sticker.id}.webp"
+                                            val localPathLowQuality =
+                                                "-${sticker.id}_1109.webp"
+                                            val stickerFile = File(tgCachePath, localPath)
+                                            val destFile =
+                                                File(destDir, "${sticker.id}_high.webp")
+                                            val destFileLowQuality =
+                                                File(destDir, "${sticker.id}_low.webp")
+
+                                            if (stickerFile.exists()) {
+                                                highQualityCount++
+                                                if (!destFile.exists()) {
+                                                    printLog = true
+                                                    stickerFile.copyTo(destFile)
+                                                    if (destFileLowQuality.exists()) {
+                                                        destFileLowQuality.delete()
+                                                    }
+                                                }
+                                            } else if (File(
+                                                    tgCachePath,
+                                                    localPathLowQuality
+                                                ).exists()
+                                            ) {
+                                                lowQualityCount++
+                                                if (!destFileLowQuality.exists() && !destFile.exists()) {
+                                                    printLog = true
+                                                    File(
+                                                        tgCachePath,
+                                                        localPathLowQuality
+                                                    ).copyTo(destFileLowQuality)
+                                                }
+                                            } else {
+                                                if (!destFile.exists()) fullSync = false
+                                            }
+                                        }
+                                        "video/webm" -> {
+                                            val localPath =
+                                                "${sticker.dc_id}_${sticker.id}.webm"
+                                            val stickerFile = File(tgCachePath, localPath)
+                                            val destFile =
+                                                File(destDir, "${sticker.id}_high.webm")
+                                            if (stickerFile.exists()) {
+                                                highQualityCount++
+                                                if (!destFile.exists()) {
+                                                    printLog = true
+                                                    stickerFile.copyTo(destFile)
+                                                }
+                                            }
+                                        }
+                                        else -> {
+
+                                            YLog.debug("Unknown mime_type: ${sticker.mime_type}")
+                                            continue;
+                                        }
+                                    }
+                                }
+
+                                if (printLog)
+                                    YLog.debug("*new* [${lowQualityCount + highQualityCount}(Low$lowQualityCount High${highQualityCount})/${stickerSet.set.count}] ${stickerSet.set.title} ${stickerSet.set.short_name} ${stickerSet.set.count} ${stickerSet.set.hash}")
+                                if (fullSync) ignoreSet.add(stickerSet.set.hash)
+                            }
                         }
 
                         return true
