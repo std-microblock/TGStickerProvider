@@ -119,16 +119,19 @@ class HookEntry : IYukiHookXposedInit {
                                                     stickerDataPath,
                                                     "${stickerSet.set.hash}.stickerData.txt.jpg"
                                                 )
-                                            if (!stickerNameFile.exists()) {
-                                                try {
-                                                    File(stickerDataPath).mkdirs()
-                                                    stickerNameFile.createNewFile()
-                                                    stickerNameFile.writeText(stickerSet.set.short_name + "\n" + stickerSet.set.title + "\n" + stickerSet.set.count)
-                                                } catch (e: Exception) {
-                                                    YLog.error(e.toString())
-                                                    // has occupied by another app
-                                                    continue
-                                                }
+                                            try {
+                                                File(stickerDataPath).mkdirs()
+                                                stickerNameFile.createNewFile()
+                                                stickerNameFile.writeText(
+                                                    stickerSet.set.short_name + "\n" +
+                                                            stickerSet.set.title + "\n" +
+                                                            stickerSet.set.count + "\n" +
+                                                            stickerSet.documents[0]?.mime_type
+                                                )
+                                            } catch (e: Exception) {
+                                                YLog.error(e.toString())
+                                                // has occupied by another app
+                                                continue
                                             }
 
                                             var fullSync = true
@@ -142,42 +145,64 @@ class HookEntry : IYukiHookXposedInit {
                                                 false // only print log if there is a new sticker
 
                                             for (sticker in stickerSet.documents) {
-                                                val localPath =
-                                                    "${sticker.dc_id}_${sticker.id}.webp"
-                                                val localPathLowQuality =
-                                                    "-${sticker.id}_1109.webp"
-                                                val stickerFile = File(tgCachePath, localPath)
-                                                val destFile =
-                                                    File(destDir, "${sticker.id}_high.webp")
-                                                val destFileLowQuality =
-                                                    File(destDir, "${sticker.id}_low.webp")
+                                                when(sticker.mime_type) {
+                                                    "image/webp" -> {
+                                                        val localPath =
+                                                            "${sticker.dc_id}_${sticker.id}.webp"
+                                                        val localPathLowQuality =
+                                                            "-${sticker.id}_1109.webp"
+                                                        val stickerFile = File(tgCachePath, localPath)
+                                                        val destFile =
+                                                            File(destDir, "${sticker.id}_high.webp")
+                                                        val destFileLowQuality =
+                                                            File(destDir, "${sticker.id}_low.webp")
 
-                                                if (stickerFile.exists()) {
-                                                    highQualityCount++
-                                                    if (!destFile.exists()) {
-                                                        printLog = true
-                                                        stickerFile.copyTo(destFile)
-                                                        if (destFileLowQuality.exists()) {
-                                                            destFileLowQuality.delete()
+                                                        if (stickerFile.exists()) {
+                                                            highQualityCount++
+                                                            if (!destFile.exists()) {
+                                                                printLog = true
+                                                                stickerFile.copyTo(destFile)
+                                                                if (destFileLowQuality.exists()) {
+                                                                    destFileLowQuality.delete()
+                                                                }
+                                                            }
+                                                        } else if (File(
+                                                                tgCachePath,
+                                                                localPathLowQuality
+                                                            ).exists()
+                                                        ) {
+                                                            lowQualityCount++
+                                                            if (!destFileLowQuality.exists() && !destFile.exists()) {
+                                                                printLog = true
+                                                                File(
+                                                                    tgCachePath,
+                                                                    localPathLowQuality
+                                                                ).copyTo(destFileLowQuality)
+                                                            }
+                                                        } else {
+                                                            if (!destFile.exists()) fullSync = false
                                                         }
                                                     }
-                                                } else if (File(
-                                                        tgCachePath,
-                                                        localPathLowQuality
-                                                    ).exists()
-                                                ) {
-                                                    lowQualityCount++
-                                                    if (!destFileLowQuality.exists() && !destFile.exists()) {
-                                                        printLog = true
-                                                        File(
-                                                            tgCachePath,
-                                                            localPathLowQuality
-                                                        ).copyTo(destFileLowQuality)
+                                                    "video/webm" -> {
+                                                        val localPath =
+                                                            "${sticker.dc_id}_${sticker.id}.webm"
+                                                        val stickerFile = File(tgCachePath, localPath)
+                                                        val destFile =
+                                                            File(destDir, "${sticker.id}_high.webm")
+                                                        if (stickerFile.exists()) {
+                                                            highQualityCount++
+                                                            if (!destFile.exists()) {
+                                                                printLog = true
+                                                                stickerFile.copyTo(destFile)
+                                                            }
+                                                        }
                                                     }
-                                                } else {
-                                                    if (!destFile.exists()) fullSync = false
-                                                }
+                                                    else -> {
 
+                                                        YLog.debug("Unknown mime_type: ${sticker.mime_type}")
+                                                        continue;
+                                                    }
+                                                }
                                             }
 
                                             if (printLog)
