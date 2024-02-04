@@ -60,4 +60,5 @@ dependencies {
     testImplementation(junit.junit)
     androidTestImplementation(androidx.test.ext.junit)
     androidTestImplementation(androidx.test.espresso.espresso.core)
+    implementation("com.arthenica:ffmpeg-kit-video:6.0-2")
 }

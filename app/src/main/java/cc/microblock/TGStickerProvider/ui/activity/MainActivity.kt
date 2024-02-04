@@ -31,6 +31,7 @@ import cc.microblock.TGStickerProvider.realDataPath
 import cc.microblock.TGStickerProvider.stickerDataPath
 import cc.microblock.TGStickerProvider.tgspDataPath
 import cc.microblock.TGStickerProvider.ui.activity.base.BaseActivity
+import com.arthenica.ffmpegkit.FFmpegKit
 import com.google.android.material.textview.MaterialTextView
 import com.highcapable.yukihookapi.YukiHookAPI
 import com.highcapable.yukihookapi.hook.log.YLog
@@ -45,7 +46,8 @@ data class StickerInfo(
     val hash: String,
     val remoteState: StickerState,
     val syncedState: StickerState,
-    val all: Int
+    val all: Int,
+    val type: String
 )
 
 class RecyclerAdapterStickerList(private val act: MainActivity) :
@@ -69,7 +71,7 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
         return ViewHolder(view)
     }
 
-    @RequiresApi(Build.VERSION_CODES.P)
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val s = stickerList[position]
         holder.name.text = s.name
@@ -99,14 +101,15 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
                 for ((index, remoteFile) in remoteFileList.withIndex()) {
                     val nameWithoutExt = remoteFile.name.substringBefore(".")
                     val id = nameWithoutExt.substringBefore("_")
-                    val outPathPng = "${syncedFolder}/${nameWithoutExt}.png"
+
                     // val outPathGif = "${syncedFolder}/${nameWithoutExt}.gif"
-                    val outPathWebp = "${syncedFolder}/${nameWithoutExt}.webp"
 
                     val existing = File(syncedFolder).listFiles()?.filter { it.name.startsWith(id) }
                         ?: emptyList()
-                    if (existing.isEmpty() || existing[0].name.endsWith(".webp")) {
-                        if (remoteFile.name.endsWith(".webp")) {
+
+                    when(remoteFile.extension) {
+                        "webp"->{
+                            val outPathPng = "${syncedFolder}/${nameWithoutExt}.png"
                             val decoder = ImageDecoder.createSource(remoteFile)
                             val bitmap = ImageDecoder.decodeBitmap(decoder)
                             val out = File(outPathPng)
@@ -118,13 +121,24 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
                                 )
                             }
 
-                            File(outPathWebp).delete()
-
                             for (file in existing) {
-                                file.delete()
+                                if(file.extension == "webp")
+                                    file.delete()
                             }
-                        } else {
-                            remoteFile.copyTo(File("${syncedFolder}/${remoteFile.name}"), true)
+                        }
+                        "webm"->{
+                            // encode to gif
+                            val outPath = "${syncedFolder}/${nameWithoutExt}.gif"
+                            if (File(outPath).exists()) {
+                                File(outPath).delete()
+                            }
+
+                            val session = FFmpegKit.execute("-i ${remoteFile.absolutePath} -pix_fmt rgb24 ${outPath}")
+                            if (session.returnCode.isValueSuccess) {
+                                YLog.info("FFmpegKit: ${session.command} finished successfully")
+                            } else {
+                                YLog.error("FFmpegKit: ${session.command} failed with state ${session.state} and rc ${session.returnCode}")
+                            }
                         }
                     }
 
@@ -321,6 +335,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                 if (id in ignoreIds) continue
                 val name = lines[1]
                 val allSize = lines[2].toInt()
+                val type = if(lines.size > 3) lines[3] else "unknown"
 
                 if (stickerList.any { it.hash == hash }) continue
 
@@ -330,7 +345,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                 File("$destDataPath/tgSync_$id").listFiles()?.forEach {
                     if (it.name.endsWith("_low.webp")) {
                         remoteState.lowQuality++
-                    } else if (it.name.endsWith("_high.webp")) {
+                    } else if (it.name.endsWith("_high.webp") || it.name.endsWith("_high.webm")) {
                         remoteState.highQuality++
                     }
 
@@ -347,7 +362,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                     syncedState.all++
                 }
 
-                stickerList.add(StickerInfo(name, id, hash, remoteState, syncedState, allSize))
+                stickerList.add(StickerInfo(name, id, hash, remoteState, syncedState, allSize, type))
             } catch (e: Exception) {
                 YLog.error("Error while parsing ${file.name}", e)
             }
