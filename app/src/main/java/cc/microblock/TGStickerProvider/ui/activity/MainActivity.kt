@@ -76,6 +76,7 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
         val imageView: ShapeableImageView = view.findViewById(R.id.imageView)
         val videoView: VideoView = view.findViewById(R.id.videoView)
         val videoCard: CardView = view.findViewById(R.id.videoCard)
+        val unsupported: TextView = view.findViewById(R.id.unsupported)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -103,6 +104,9 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
                 holder.videoCard.visibility = View.GONE
                 holder.imageView.visibility = View.VISIBLE
                 holder.videoView.stopPlayback()
+                holder.unsupported.visibility = View.GONE
+                holder.rmBtn.visibility = View.VISIBLE
+                holder.syncBtn.visibility = View.VISIBLE
             }
             "webm" -> {
                 holder.videoView.setVideoPath(s.preview.url)
@@ -118,12 +122,18 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
 
                 holder.videoCard.visibility = View.VISIBLE
                 holder.imageView.visibility = View.GONE
+                holder.unsupported.visibility = View.GONE
+                holder.rmBtn.visibility = View.VISIBLE
+                holder.syncBtn.visibility = View.VISIBLE
             }
             else -> {
                 holder.imageView.setImageResource(R.drawable.ic_launcher_background)
                 holder.imageView.visibility = View.VISIBLE
                 holder.videoCard.visibility = View.GONE
                 holder.videoView.stopPlayback()
+                holder.rmBtn.visibility = View.GONE
+                holder.syncBtn.visibility = View.GONE
+                holder.unsupported.visibility = View.VISIBLE
             }
         }
 
@@ -359,7 +369,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             it.isAccessible = true
             it.set(binding.stickerManageView, 1000)
         }
-
 
         stickerList.observe(this) {
             runOnUiThread {
