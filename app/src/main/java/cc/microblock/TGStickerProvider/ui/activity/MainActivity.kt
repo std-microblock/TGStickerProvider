@@ -175,7 +175,7 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
 
                                 val session = FFmpegKit.execute(
                                     if(act.useHighQualityGif)
-                                        "-i ${remoteFile.absolutePath} -lavfi split[v],palettegen,[v]paletteuse ${outPath}"
+                                        "-i ${remoteFile.absolutePath} -lavfi split[v],palettegen,[v]paletteuse -f gif ${outPath}"
                                     else
                                         "-i ${remoteFile.absolutePath} -vf scale=320:-1 -r 10 -f gif ${outPath}"
                                 )
