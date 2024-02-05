@@ -18,6 +18,7 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.widget.doOnTextChanged
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -227,6 +228,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
     }
 
+    var filter = ""
     @SuppressLint("NotifyDataSetChanged")
     override fun onCreate() {
         refreshModuleStatus()
@@ -276,12 +278,25 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             }
         }
 
+        binding.searchBar.doOnTextChanged() { text, _, _, _ ->
+            filter = text.toString()
+            (binding.stickerManageView.adapter as RecyclerAdapterStickerList).stickerList =
+                stickerList.value?.filter {
+                    it.name.contains(filter, ignoreCase = true) || it.id.contains(filter, ignoreCase = true)
+                            || it.type.contains(filter, ignoreCase = true)
+                } ?: listOf()
+            binding.stickerManageView.adapter?.notifyDataSetChanged()
+        }
+
         binding.stickerManageView.layoutManager = LinearLayoutManager(this)
         binding.stickerManageView.adapter = RecyclerAdapterStickerList(this)
 
         stickerList.observe(this) {
             runOnUiThread {
-                (binding.stickerManageView.adapter as RecyclerAdapterStickerList).stickerList = it
+                (binding.stickerManageView.adapter as RecyclerAdapterStickerList).stickerList = it.filter {
+                    it.name.contains(filter, ignoreCase = true) || it.id.contains(filter, ignoreCase = true)
+                            || it.type.contains(filter, ignoreCase = true)
+                }
                 binding.stickerManageView.adapter?.notifyDataSetChanged()
             }
         }
