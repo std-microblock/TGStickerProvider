@@ -365,9 +365,13 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                 super.onScrollStateChanged(recyclerView, newState)
             }
         })
-        binding.stickerManageView.javaClass.getDeclaredField("mMaxFlingVelocity").let {
-            it.isAccessible = true
-            it.set(binding.stickerManageView, 1000)
+        try {
+            binding.stickerManageView.javaClass.getDeclaredField("mMaxFlingVelocity").let {
+                it.isAccessible = true
+                it.set(binding.stickerManageView, 1000)
+            }
+        } catch (e: Exception) {
+            YLog.error("Error while setting max fling velocity", e)
         }
 
         stickerList.observe(this) {
