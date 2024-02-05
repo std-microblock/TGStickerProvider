@@ -102,8 +102,6 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
                     val nameWithoutExt = remoteFile.name.substringBefore(".")
                     val id = nameWithoutExt.substringBefore("_")
 
-                    // val outPathGif = "${syncedFolder}/${nameWithoutExt}.gif"
-
                     val existing = File(syncedFolder).listFiles()?.filter { it.name.startsWith(id) }
                         ?: emptyList()
 
@@ -129,15 +127,13 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
                         "webm"->{
                             // encode to gif
                             val outPath = "${syncedFolder}/${nameWithoutExt}.gif"
-                            if (File(outPath).exists()) {
-                                File(outPath).delete()
-                            }
-
-                            val session = FFmpegKit.execute("-i ${remoteFile.absolutePath} -pix_fmt rgb24 ${outPath}")
-                            if (session.returnCode.isValueSuccess) {
-                                YLog.info("FFmpegKit: ${session.command} finished successfully")
-                            } else {
-                                YLog.error("FFmpegKit: ${session.command} failed with state ${session.state} and rc ${session.returnCode}")
+                            if (!File(outPath).exists()) {
+                                val session = FFmpegKit.execute("-i ${remoteFile.absolutePath} -pix_fmt rgb24 ${outPath}")
+                                if (session.returnCode.isValueSuccess) {
+                                    YLog.info("FFmpegKit: ${session.command} finished successfully")
+                                } else {
+                                    YLog.error("FFmpegKit: ${session.command} failed with state ${session.state} and rc ${session.returnCode}")
+                                }
                             }
                         }
                     }
