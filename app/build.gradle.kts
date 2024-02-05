@@ -15,6 +15,10 @@ android {
         versionName = property.project.app.versionName
         versionCode = property.project.app.versionCode
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters.clear();
+            abiFilters.add("arm64-v8a");
+        }
     }
     buildTypes {
         release {
@@ -60,5 +64,5 @@ dependencies {
     testImplementation(junit.junit)
     androidTestImplementation(androidx.test.ext.junit)
     androidTestImplementation(androidx.test.espresso.espresso.core)
-    implementation("com.arthenica:ffmpeg-kit-video:6.0-2")
+    implementation("com.arthenica:ffmpeg-kit-min:6.0-2")
 }
