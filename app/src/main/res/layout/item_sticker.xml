@@ -119,7 +119,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="包内表情总数"
+                    android:text="包内总数"
                     android:textAlignment="gravity"
                     android:textSize="8sp" />
 
