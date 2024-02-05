@@ -9,7 +9,7 @@ import java.io.File
 object CachePathHelper {
     @JvmStatic
     fun getCachePath(context: Application?, packageName: String): String {
-        var defaultCachePath = "/storage/emulated/0/Android/data/${packageName}/cache"
+        var defaultCachePath = "/storage/self/primary/Android/data/${packageName}/cache"
         if (context != null && isNekoX(packageName)) {
             val nekoXCachePath = getNekoXCachePath(context)
             if (nekoXCachePath != null) {
