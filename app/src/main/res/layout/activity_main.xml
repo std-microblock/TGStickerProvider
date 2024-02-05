@@ -161,7 +161,7 @@
         android:orientation="vertical"
         android:paddingHorizontal="20dp"
         android:paddingVertical="20dp"
-        android:visibility="invisible">
+        android:visibility="visible">
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
@@ -196,7 +196,15 @@
                 android:layout_height="wrap_content"
                 android:text="@string/refresh_sticker"
                 android:textColor="#fff" />
+
         </LinearLayout>
+
+        <Switch
+            android:id="@+id/gifQualitySwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="高清 Gif（慢）" />
 
         <TextView
             android:id="@+id/textView"

@@ -6,7 +6,9 @@ import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.ProgressDialog
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.ImageDecoder
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -17,7 +19,9 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.VideoView
 import androidx.annotation.RequiresApi
+import androidx.cardview.widget.CardView
 import androidx.core.widget.doOnTextChanged
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -33,6 +37,8 @@ import cc.microblock.TGStickerProvider.stickerDataPath
 import cc.microblock.TGStickerProvider.tgspDataPath
 import cc.microblock.TGStickerProvider.ui.activity.base.BaseActivity
 import com.arthenica.ffmpegkit.FFmpegKit
+import com.bumptech.glide.Glide
+import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.textview.MaterialTextView
 import com.highcapable.yukihookapi.YukiHookAPI
 import com.highcapable.yukihookapi.hook.log.YLog
@@ -41,6 +47,7 @@ import kotlin.concurrent.thread
 
 
 data class StickerState(var highQuality: Int, var lowQuality: Int, var all: Int)
+data class PreviewInfo(var type: String, var url: String)
 data class StickerInfo(
     val name: String,
     val id: String,
@@ -48,7 +55,8 @@ data class StickerInfo(
     val remoteState: StickerState,
     val syncedState: StickerState,
     val all: Int,
-    val type: String
+    val type: String,
+    val preview: PreviewInfo
 )
 
 class RecyclerAdapterStickerList(private val act: MainActivity) :
@@ -65,6 +73,9 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
         val totalAll: TextView = view.findViewById(R.id.totalAll)
         val syncBtn: Button = view.findViewById(R.id.syncBtn)
         val rmBtn: MaterialTextView = view.findViewById(R.id.rmBtn)
+        val imageView: ShapeableImageView = view.findViewById(R.id.imageView)
+        val videoView: VideoView = view.findViewById(R.id.videoView)
+        val videoCard: CardView = view.findViewById(R.id.videoCard)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -82,6 +93,36 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
         holder.exportedAll.text = s.remoteState.all.toString()
         holder.exportedStatus.text = "低清 ${s.remoteState.lowQuality}\n高清 ${s.remoteState.highQuality}"
         holder.totalAll.text = s.all.toString();
+
+        when (s.preview.type) {
+            "webp" -> {
+                Glide.with(act)
+                    .load(s.preview.url)
+                    .error(ColorDrawable(Color.RED))
+                    .into(holder.imageView)
+                holder.videoCard.visibility = View.GONE
+                holder.imageView.visibility = View.VISIBLE
+            }
+            "webm" -> {
+                holder.videoView.setVideoURI(Uri.fromFile(File(s.preview.url)))
+                holder.videoView.start()
+                holder.videoView.setOnPreparedListener {
+                    it.isLooping = true
+                }
+                holder.videoView.setOnErrorListener { mp, what, extra ->
+                    YLog.error("VideoView error: $what, $extra")
+                    true
+                }
+
+                holder.videoCard.visibility = View.VISIBLE
+                holder.imageView.visibility = View.GONE
+            }
+            else -> {
+                holder.imageView.setImageResource(R.drawable.ic_launcher_background)
+                holder.imageView.visibility = View.VISIBLE
+                holder.videoCard.visibility = View.GONE
+            }
+        }
 
         holder.syncBtn.setOnClickListener {
             val pd = ProgressDialog(act)
@@ -123,13 +164,21 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
                             for (file in existing) {
                                 if(file.extension == "webp")
                                     file.delete()
+                                if(file.extension == "png" && file.name != "${nameWithoutExt}.png")
+                                    file.delete()
                             }
                         }
                         "webm"->{
                             // encode to gif
                             val outPath = "${syncedFolder}/${nameWithoutExt}.gif"
                             if (!File(outPath).exists()) {
-                                val session = FFmpegKit.execute("-i ${remoteFile.absolutePath} -pix_fmt rgb24 ${outPath}")
+
+                                val session = FFmpegKit.execute(
+                                    if(act.useHighQualityGif)
+                                        "-i ${remoteFile.absolutePath} -lavfi split[v],palettegen,[v]paletteuse ${outPath}"
+                                    else
+                                        "-i ${remoteFile.absolutePath} -vf scale=320:-1 -r 10 -f gif ${outPath}"
+                                )
                                 if (session.returnCode.isValueSuccess) {
                                     YLog.info("FFmpegKit: ${session.command} finished successfully")
                                 } else {
@@ -229,6 +278,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     }
 
     var filter = ""
+    var useHighQualityGif = false
     @SuppressLint("NotifyDataSetChanged")
     override fun onCreate() {
         refreshModuleStatus()
@@ -238,7 +288,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             binding.tips.visibility = View.GONE
             binding.manage.visibility = View.VISIBLE
         }
-
+        binding.gifQualitySwitch.setOnCheckedChangeListener { _, isChecked ->
+            useHighQualityGif = isChecked
+        }
         binding.resetBtn.setOnClickListener {
             AlertDialog.Builder(this)
                 .setTitle("清除已同步的表情包集缓存")
@@ -290,6 +342,16 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
         binding.stickerManageView.layoutManager = LinearLayoutManager(this)
         binding.stickerManageView.adapter = RecyclerAdapterStickerList(this)
+        binding.stickerManageView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                if(newState == RecyclerView.SCROLL_STATE_IDLE || newState == RecyclerView.SCROLL_STATE_DRAGGING) {
+                    Glide.with(this@MainActivity).resumeRequests()
+                } else {
+                    Glide.with(this@MainActivity).pauseRequests()
+                }
+                super.onScrollStateChanged(recyclerView, newState)
+            }
+        })
 
         stickerList.observe(this) {
             runOnUiThread {
@@ -373,7 +435,22 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                     syncedState.all++
                 }
 
-                stickerList.add(StickerInfo(name, id, hash, remoteState, syncedState, allSize, type))
+                val files = File("$destDataPath/tgSync_${id}").listFiles()?: emptyArray();
+                val preview = if (files.isNotEmpty()) {
+                    val it = files[0]
+                    if (it.extension == "webp") {
+                        PreviewInfo("webp", it.absolutePath)
+                    } else if(it.extension == "webm") {
+                        PreviewInfo("webm", it.absolutePath)
+                    } else
+                    {
+                        PreviewInfo("unknown", "")
+                    }
+                } else {
+                    PreviewInfo("unknown", "")
+                }
+
+                stickerList.add(StickerInfo(name, id, hash, remoteState, syncedState, allSize, type, preview))
             } catch (e: Exception) {
                 YLog.error("Error while parsing ${file.name}", e)
             }

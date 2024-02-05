@@ -14,7 +14,9 @@
         <item name="android:windowLightStatusBar">true</item>
         <!-- Customize your theme here. -->
     </style>
-
+    <style name="ShapeAppearanceOverlay.App.CornerSize15Percent" parent="">
+        <item name="cornerSize">15%</item>
+    </style>
     <style name="NoDisplay" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:windowFrame">@null</item>
         <!-- 设置是否可滑动 -->

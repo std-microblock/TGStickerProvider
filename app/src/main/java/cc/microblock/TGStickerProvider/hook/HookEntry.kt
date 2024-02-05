@@ -220,8 +220,7 @@ class HookEntry : IYukiHookXposedInit {
                                             }
                                         }
                                         else -> {
-
-                                            YLog.debug("Unknown mime_type: ${sticker.mime_type}")
+//                                            YLog.debug("Unknown mime_type: ${sticker.mime_type}")
                                             continue;
                                         }
                                     }
