@@ -102,12 +102,14 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
                     .into(holder.imageView)
                 holder.videoCard.visibility = View.GONE
                 holder.imageView.visibility = View.VISIBLE
+                holder.videoView.stopPlayback()
             }
             "webm" -> {
-                holder.videoView.setVideoURI(Uri.fromFile(File(s.preview.url)))
+                holder.videoView.setVideoPath(s.preview.url)
                 holder.videoView.start()
                 holder.videoView.setOnPreparedListener {
                     it.isLooping = true
+                    it.setVolume(0f, 0f)
                 }
                 holder.videoView.setOnErrorListener { mp, what, extra ->
                     YLog.error("VideoView error: $what, $extra")
@@ -121,6 +123,7 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
                 holder.imageView.setImageResource(R.drawable.ic_launcher_background)
                 holder.imageView.visibility = View.VISIBLE
                 holder.videoCard.visibility = View.GONE
+                holder.videoView.stopPlayback()
             }
         }
 
@@ -352,6 +355,11 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                 super.onScrollStateChanged(recyclerView, newState)
             }
         })
+        binding.stickerManageView.javaClass.getDeclaredField("mMaxFlingVelocity").let {
+            it.isAccessible = true
+            it.set(binding.stickerManageView, 1000)
+        }
+
 
         stickerList.observe(this) {
             runOnUiThread {

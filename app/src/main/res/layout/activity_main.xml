@@ -161,7 +161,7 @@
         android:orientation="vertical"
         android:paddingHorizontal="20dp"
         android:paddingVertical="20dp"
-        android:visibility="visible">
+        android:visibility="gone">
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
