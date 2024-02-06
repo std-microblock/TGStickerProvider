@@ -95,9 +95,9 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
         holder.totalAll.text = s.all.toString();
 
         when (s.type) {
-            "image/webp" -> {
+            "unknown", "image/webp" -> {
                 Glide.with(act)
-                    .load(s.preview.url)
+                    .load(if(s.preview.type==="webp") s.preview.url else R.drawable.bg_dark_round)
                     .error(ColorDrawable(Color.RED))
                     .into(holder.imageView)
                 holder.videoCard.visibility = View.GONE
@@ -138,7 +138,9 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
 
         holder.syncBtn.setOnClickListener {
             act.syncStickerPack(s, {
-                Toast.makeText(act, "同步完成", Toast.LENGTH_SHORT).show()
+                act.runOnUiThread {
+                    Toast.makeText(act, "同步完成", Toast.LENGTH_SHORT).show()
+                }
             }, { count, reasons ->
                 act.runOnUiThread {
                     AlertDialog.Builder(act)

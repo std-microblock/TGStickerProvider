@@ -175,7 +175,7 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
@@ -188,10 +188,11 @@
 
             <Button
                 android:id="@+id/syncAllBtn"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="同步所有" />
+                android:text="同步所有表情包"
+                android:textColor="#fff" />
 
             <Button
                 android:id="@+id/refreshBtn"
