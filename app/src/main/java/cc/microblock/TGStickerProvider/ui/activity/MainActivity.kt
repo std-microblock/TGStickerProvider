@@ -95,8 +95,8 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
         holder.exportedStatus.text = "低清 ${s.remoteState.lowQuality}\n高清 ${s.remoteState.highQuality}"
         holder.totalAll.text = s.all.toString();
 
-        when (s.preview.type) {
-            "webp" -> {
+        when (s.type) {
+            "image/webp" -> {
                 Glide.with(act)
                     .load(s.preview.url)
                     .error(ColorDrawable(Color.RED))
@@ -108,7 +108,7 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
                 holder.rmBtn.visibility = View.VISIBLE
                 holder.syncBtn.visibility = View.VISIBLE
             }
-            "webm" -> {
+            "video/webm" -> {
                 holder.videoView.setVideoPath(s.preview.url)
                 holder.videoView.start()
                 holder.videoView.setOnPreparedListener {
@@ -127,18 +127,20 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
                 holder.syncBtn.visibility = View.VISIBLE
             }
             else -> {
-                holder.imageView.setImageResource(R.drawable.ic_launcher_background)
-                holder.imageView.visibility = View.VISIBLE
+                holder.imageView.visibility = View.GONE
                 holder.videoCard.visibility = View.GONE
                 holder.videoView.stopPlayback()
                 holder.rmBtn.visibility = View.GONE
                 holder.syncBtn.visibility = View.GONE
                 holder.unsupported.visibility = View.VISIBLE
+                holder.unsupported.text = "不支持的表情包"
             }
         }
 
         holder.syncBtn.setOnClickListener {
             val pd = ProgressDialog(act)
+            var failCount = 0
+            var failReasons = ""
             pd.setMessage("正在同步")
             pd.show()
             pd.setCancelable(false)
@@ -162,23 +164,29 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
 
                     when(remoteFile.extension) {
                         "webp"->{
-                            val outPathPng = "${syncedFolder}/${nameWithoutExt}.png"
-                            val decoder = ImageDecoder.createSource(remoteFile)
-                            val bitmap = ImageDecoder.decodeBitmap(decoder)
-                            val out = File(outPathPng)
-                            out.outputStream().buffered().use {
-                                bitmap.compress(
-                                    android.graphics.Bitmap.CompressFormat.PNG,
-                                    100,
-                                    it
-                                )
-                            }
+                            try {
+                                val outPathPng = "${syncedFolder}/${nameWithoutExt}.png"
+                                val decoder = ImageDecoder.createSource(remoteFile)
+                                val bitmap = ImageDecoder.decodeBitmap(decoder)
+                                val out = File(outPathPng)
+                                out.outputStream().buffered().use {
+                                    bitmap.compress(
+                                        android.graphics.Bitmap.CompressFormat.PNG,
+                                        100,
+                                        it
+                                    )
+                                }
 
-                            for (file in existing) {
-                                if(file.extension == "webp")
-                                    file.delete()
-                                if(file.extension == "png" && file.name != "${nameWithoutExt}.png")
-                                    file.delete()
+                                for (file in existing) {
+                                    if(file.extension == "webp")
+                                        file.delete()
+                                    if(file.extension == "png" && file.name != "${nameWithoutExt}.png")
+                                        file.delete()
+                                }
+                            } catch (e: Exception) {
+                                YLog.error("Error while converting webp to png", e)
+                                failReasons += "$id: Error while converting webp to png: ${e.message}\n"
+                                failCount++
                             }
                         }
                         "webm"->{
@@ -196,6 +204,8 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
                                     YLog.info("FFmpegKit: ${session.command} finished successfully")
                                 } else {
                                     YLog.error("FFmpegKit: ${session.command} failed with state ${session.state} and rc ${session.returnCode}")
+                                    failReasons += "$id: FFmpegKit: ${session.command} failed with state ${session.state} and rc ${session.returnCode}\n"
+                                    failCount++
                                 }
                             }
                         }
@@ -206,6 +216,16 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
                 act.runOnUiThread { pd.setMessage("正在更新列表") }
                 act.updateStickerList()
                 act.runOnUiThread { pd.dismiss() }
+
+                if (failCount > 0) {
+                    act.runOnUiThread {
+                        AlertDialog.Builder(act)
+                            .setTitle("有 $failCount 个表情包同步失败")
+                            .setMessage(failReasons)
+                            .setIcon(android.R.drawable.ic_dialog_alert)
+                            .setPositiveButton("确定", null).show()
+                    }
+                }
             }
         }
 
