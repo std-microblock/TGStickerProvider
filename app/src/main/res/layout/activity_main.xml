@@ -177,7 +177,7 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="vertical">
 
             <Button
                 android:id="@+id/resetBtn"
@@ -186,9 +186,12 @@
                 android:text="@string/reset_sticker"
                 android:textColor="#fff" />
 
-            <View
-                android:layout_width="10dp"
-                android:layout_height="1dp" />
+            <Button
+                android:id="@+id/syncAllBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="同步所有" />
 
             <Button
                 android:id="@+id/refreshBtn"

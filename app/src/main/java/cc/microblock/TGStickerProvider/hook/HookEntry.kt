@@ -30,7 +30,6 @@ import kotlin.concurrent.thread
 class HookEntry : IYukiHookXposedInit {
 
     @SuppressLint("DiscouragedPrivateApi")
-    @RequiresApi(Build.VERSION_CODES.R)
     override fun onInit() = configs {
         debugLog {
             tag = "TGStickerProvider"
@@ -70,7 +69,6 @@ class HookEntry : IYukiHookXposedInit {
 
             while (true) {
                 try {
-                    @RequiresApi(Build.VERSION_CODES.O_MR1)
                     fun checkDb(dbPath: String, sheetName: String): Boolean {
                         val cache4DB = File(dbPath)
                         val dedupSet = HashSet<Int>()
