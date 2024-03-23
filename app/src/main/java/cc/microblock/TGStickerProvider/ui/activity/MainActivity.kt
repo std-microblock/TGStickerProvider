@@ -357,47 +357,51 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         }
 
         binding.syncAllBtn.setOnClickListener {
-            val pd = ProgressDialog(this).apply {
-                setMessage("正在同步")
-                show()
-                setCancelable(false)
-            }
-            thread(true) {
-                var failCount = 0
-                var failReasons = ""
-
-                fun syncIndex (index: Int) {
-                    val s = stickerList.value?.get(index) ?: return
-                    var index = index
-                    syncStickerPack(s, {
-                        index++
-                        if (index < stickerList.value?.size ?: 0) {
-                            syncIndex(index)
-                        } else {
-                            pd.dismiss()
-                            runOnUiThread {
-                                Toast.makeText(this, "同步完成", Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    }, { count, reasons ->
-                        failCount += count
-                        failReasons += reasons
-                        index++
-                        if (index < stickerList.value?.size ?: 0) {
-                            syncIndex(index)
-                        } else {
-                            pd.dismiss()
-                            runOnUiThread {
-                                AlertDialog.Builder(this)
-                                    .setTitle("有 $failCount 个表情同步失败")
-                                    .setMessage(failReasons)
-                                    .setIcon(android.R.drawable.ic_dialog_alert)
-                                    .setPositiveButton("确定", null).show()
-                            }
-                        }
-                    })
+            runOnUiThread {
+                val pd = ProgressDialog(this).apply {
+                    setMessage("正在同步")
+                    show()
+                    setCancelable(false)
                 }
-                syncIndex(0);
+
+                thread(true) {
+                    var failCount = 0
+                    var failReasons = ""
+
+                    fun syncIndex(index: Int) {
+                        val s = stickerList.value?.get(index) ?: return
+                        var index = index
+                        syncStickerPack(s, {
+                            index++
+                            if (index < stickerList.value?.size ?: 0) {
+                                syncIndex(index)
+                            } else {
+                                runOnUiThread {
+                                    pd.dismiss()
+                                    Toast.makeText(this, "同步完成", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }, { count, reasons ->
+                            failCount += count
+                            failReasons += reasons
+                            index++
+                            if (index < stickerList.value?.size ?: 0) {
+                                syncIndex(index)
+                            } else {
+                                runOnUiThread {
+                                    pd.dismiss()
+                                    AlertDialog.Builder(this)
+                                        .setTitle("有 $failCount 个表情同步失败")
+                                        .setMessage(failReasons)
+                                        .setIcon(android.R.drawable.ic_dialog_alert)
+                                        .setPositiveButton("确定", null).show()
+                                }
+                            }
+                        })
+                    }
+                    syncIndex(0);
+                }
+
             }
         }
 
@@ -442,14 +446,14 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                 super.onScrollStateChanged(recyclerView, newState)
             }
         })
-        try {
-            binding.stickerManageView.javaClass.getDeclaredField("mMaxFlingVelocity").let {
-                it.isAccessible = true
-                it.set(binding.stickerManageView, 1000)
-            }
-        } catch (e: Exception) {
-            YLog.error("Error while setting max fling velocity", e)
-        }
+//        try {
+//            binding.stickerManageView.javaClass.getDeclaredField("mMaxFlingVelocity").let {
+//                it.isAccessible = true
+//                it.set(binding.stickerManageView, 1000)
+//            }
+//        } catch (e: Exception) {
+//            YLog.error("Error while setting max fling velocity", e)
+//        }
 
         stickerList.observe(this) {
             runOnUiThread {
