@@ -361,6 +361,10 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
         binding.syncAllBtn.setOnClickListener {
             runOnUiThread {
+                if (stickerList.value.isNullOrEmpty()) {
+                    Toast.makeText(this, "表情包为空", Toast.LENGTH_SHORT).show()
+                    return@runOnUiThread
+                }
                 val pd = ProgressDialog(this).apply {
                     setMessage("正在同步")
                     show()
