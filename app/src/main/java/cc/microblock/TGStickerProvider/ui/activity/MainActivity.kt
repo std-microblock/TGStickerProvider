@@ -217,89 +217,92 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     public fun syncStickerPack(info: StickerInfo, finished: () -> Unit, error: (Int, String) -> Unit) {
         val act = this
         val s = info
-        val pd = ProgressDialog(act)
-        var failCount = 0
-        var failReasons = ""
-        pd.setMessage("正在同步")
-        pd.show()
-        pd.setCancelable(false)
-        thread(true) {
-            val remoteFolder = "$destDataPath/tgSync_${s.id}"
-            val syncedFolder = "$realDataPath/tgSync_${s.id}"
-            File(syncedFolder).mkdirs()
-
-            if (!File(nomediaPath2).exists()) {
-                File(nomediaPath2).createNewFile()
+        act.runOnUiThread {
+            val pd = ProgressDialog(act).apply {
+                setMessage("正在同步")
+                show()
+                setCancelable(false)
             }
+            var failCount = 0
+            var failReasons = ""
+            thread(true) {
+                val remoteFolder = "$destDataPath/tgSync_${s.id}"
+                val syncedFolder = "$realDataPath/tgSync_${s.id}"
+                File(syncedFolder).mkdirs()
 
-            val remoteFileList = File(remoteFolder).listFiles() ?: emptyArray()
+                if (!File(nomediaPath2).exists()) {
+                    File(nomediaPath2).createNewFile()
+                }
 
-            for ((index, remoteFile) in remoteFileList.withIndex()) {
-                val nameWithoutExt = remoteFile.name.substringBefore(".")
-                val id = nameWithoutExt.substringBefore("_")
+                val remoteFileList = File(remoteFolder).listFiles() ?: emptyArray()
 
-                val existing = File(syncedFolder).listFiles()?.filter { it.name.startsWith(id) }
-                    ?: emptyList()
+                for ((index, remoteFile) in remoteFileList.withIndex()) {
+                    val nameWithoutExt = remoteFile.name.substringBefore(".")
+                    val id = nameWithoutExt.substringBefore("_")
 
-                when(remoteFile.extension) {
-                    "webp"->{
-                        try {
-                            val outPathPng = "${syncedFolder}/${nameWithoutExt}.png"
-                            val decoder = ImageDecoder.createSource(remoteFile)
-                            val bitmap = ImageDecoder.decodeBitmap(decoder)
-                            val out = File(outPathPng)
-                            out.outputStream().buffered().use {
-                                bitmap.compress(
-                                    android.graphics.Bitmap.CompressFormat.PNG,
-                                    100,
-                                    it
-                                )
-                            }
+                    val existing = File(syncedFolder).listFiles()?.filter { it.name.startsWith(id) }
+                        ?: emptyList()
 
-                            for (file in existing) {
-                                if(file.extension == "webp")
-                                    file.delete()
-                                if(file.extension == "png" && file.name != "${nameWithoutExt}.png")
-                                    file.delete()
-                            }
-                        } catch (e: Exception) {
-                            YLog.error("Error while converting webp to png", e)
-                            failReasons += "$id: Error while converting webp to png: ${e.message}\n"
-                            failCount++
-                        }
-                    }
-                    "webm"->{
-                        // encode to gif
-                        val outPath = "${syncedFolder}/${nameWithoutExt}.gif"
-                        if (!File(outPath).exists()) {
+                    when(remoteFile.extension) {
+                        "webp"->{
+                            try {
+                                val outPathPng = "${syncedFolder}/${nameWithoutExt}.png"
+                                val decoder = ImageDecoder.createSource(remoteFile)
+                                val bitmap = ImageDecoder.decodeBitmap(decoder)
+                                val out = File(outPathPng)
+                                out.outputStream().buffered().use {
+                                    bitmap.compress(
+                                        android.graphics.Bitmap.CompressFormat.PNG,
+                                        100,
+                                        it
+                                    )
+                                }
 
-                            val session = FFmpegKit.execute(
-                                if(act.useHighQualityGif)
-                                    "-i ${remoteFile.absolutePath} -lavfi split[v],palettegen,[v]paletteuse -f gif ${outPath}"
-                                else
-                                    "-i ${remoteFile.absolutePath} -vf scale=320:-1 -r 10 -f gif ${outPath}"
-                            )
-                            if (session.returnCode.isValueSuccess) {
-                                YLog.info("FFmpegKit: ${session.command} finished successfully")
-                            } else {
-                                YLog.error("FFmpegKit: ${session.command} failed with state ${session.state} and rc ${session.returnCode}")
-                                failReasons += "$id: FFmpegKit: ${session.command} failed with state ${session.state} and rc ${session.returnCode}\n"
+                                for (file in existing) {
+                                    if(file.extension == "webp")
+                                        file.delete()
+                                    if(file.extension == "png" && file.name != "${nameWithoutExt}.png")
+                                        file.delete()
+                                }
+                            } catch (e: Exception) {
+                                YLog.error("Error while converting webp to png", e)
+                                failReasons += "$id: Error while converting webp to png: ${e.message}\n"
                                 failCount++
                             }
                         }
+                        "webm"->{
+                            // encode to gif
+                            val outPath = "${syncedFolder}/${nameWithoutExt}.gif"
+                            if (!File(outPath).exists()) {
+
+                                val session = FFmpegKit.execute(
+                                    if(act.useHighQualityGif)
+                                        "-i ${remoteFile.absolutePath} -lavfi split[v],palettegen,[v]paletteuse -f gif ${outPath}"
+                                    else
+                                        "-i ${remoteFile.absolutePath} -vf scale=320:-1 -r 10 -f gif ${outPath}"
+                                )
+                                if (session.returnCode.isValueSuccess) {
+                                    YLog.info("FFmpegKit: ${session.command} finished successfully")
+                                } else {
+                                    YLog.error("FFmpegKit: ${session.command} failed with state ${session.state} and rc ${session.returnCode}")
+                                    failReasons += "$id: FFmpegKit: ${session.command} failed with state ${session.state} and rc ${session.returnCode}\n"
+                                    failCount++
+                                }
+                            }
+                        }
                     }
+
+                    act.runOnUiThread { pd.setMessage("正在同步 ${index}/${remoteFileList.size}") }
                 }
+                act.runOnUiThread { pd.setMessage("正在更新列表") }
+                act.updateStickerList()
+                act.runOnUiThread { pd.dismiss() }
 
-                act.runOnUiThread { pd.setMessage("正在同步 ${index}/${remoteFileList.size}") }
-            }
-            act.runOnUiThread { pd.setMessage("正在更新列表") }
-            act.updateStickerList()
-            act.runOnUiThread { pd.dismiss() }
-
-            if (failCount > 0) {
-                error(failCount, failReasons)
-            } else {
-                finished();
+                if (failCount > 0) {
+                    error(failCount, failReasons)
+                } else {
+                    finished();
+                }
             }
         }
     }
@@ -358,6 +361,10 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
         binding.syncAllBtn.setOnClickListener {
             runOnUiThread {
+                if (stickerList.value.isNullOrEmpty()) {
+                    Toast.makeText(this, "表情包为空", Toast.LENGTH_SHORT).show()
+                    return@runOnUiThread
+                }
                 val pd = ProgressDialog(this).apply {
                     setMessage("正在同步")
                     show()
@@ -373,7 +380,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                         var index = index
                         syncStickerPack(s, {
                             index++
-                            if (index < stickerList.value?.size ?: 0) {
+                            if (index < (stickerList.value?.size ?: 0)) {
                                 syncIndex(index)
                             } else {
                                 runOnUiThread {
@@ -385,7 +392,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                             failCount += count
                             failReasons += reasons
                             index++
-                            if (index < stickerList.value?.size ?: 0) {
+                            if (index < (stickerList.value?.size ?: 0)) {
                                 syncIndex(index)
                             } else {
                                 runOnUiThread {
