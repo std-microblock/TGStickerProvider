@@ -203,7 +203,14 @@
 
         </LinearLayout>
 
-        <Switch
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/requiresSyncOnlySwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="只显示待同步表情包" />
+
+        <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/gifQualitySwitch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

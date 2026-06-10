@@ -350,7 +350,23 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     }
 
     var filter = ""
+    var requiresSyncOnly = false
     var useHighQualityGif = false
+
+    fun onFilterChanged(list: List<StickerInfo>? = stickerList.value) {
+        if (list == null) return
+        (binding.stickerManageView.adapter as RecyclerAdapterStickerList).stickerList = list.filter {
+            if (requiresSyncOnly
+                && it.syncedState.all >= it.remoteState.all
+                && it.syncedState.highQuality >= it.remoteState.highQuality
+            ) return@filter false
+
+            it.name.contains(filter, ignoreCase = true) || it.id.contains(filter, ignoreCase = true)
+                    || it.type.contains(filter, ignoreCase = true)
+        }
+        binding.stickerManageView.adapter?.notifyDataSetChanged()
+    }
+
     @SuppressLint("NotifyDataSetChanged")
     override fun onCreate() {
         refreshModuleStatus()
@@ -359,6 +375,10 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         binding.button2.setOnClickListener {
             binding.tips.visibility = View.GONE
             binding.manage.visibility = View.VISIBLE
+        }
+        binding.requiresSyncOnlySwitch.setOnCheckedChangeListener { _, isChecked ->
+            requiresSyncOnly = isChecked
+            onFilterChanged()
         }
         binding.gifQualitySwitch.setOnCheckedChangeListener { _, isChecked ->
             useHighQualityGif = isChecked
@@ -457,12 +477,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
         binding.searchBar.doOnTextChanged() { text, _, _, _ ->
             filter = text.toString()
-            (binding.stickerManageView.adapter as RecyclerAdapterStickerList).stickerList =
-                stickerList.value?.filter {
-                    it.name.contains(filter, ignoreCase = true) || it.id.contains(filter, ignoreCase = true)
-                            || it.type.contains(filter, ignoreCase = true)
-                } ?: listOf()
-            binding.stickerManageView.adapter?.notifyDataSetChanged()
+            onFilterChanged()
         }
 
         binding.stickerManageView.layoutManager = LinearLayoutManager(this)
@@ -486,13 +501,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 //            YLog.error("Error while setting max fling velocity", e)
 //        }
 
-        stickerList.observe(this) {
+        stickerList.observe(this) { list ->
             runOnUiThread {
-                (binding.stickerManageView.adapter as RecyclerAdapterStickerList).stickerList = it.filter {
-                    it.name.contains(filter, ignoreCase = true) || it.id.contains(filter, ignoreCase = true)
-                            || it.type.contains(filter, ignoreCase = true)
-                }
-                binding.stickerManageView.adapter?.notifyDataSetChanged()
+                onFilterChanged(list)
             }
         }
     }
