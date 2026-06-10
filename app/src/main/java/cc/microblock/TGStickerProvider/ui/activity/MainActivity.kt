@@ -181,8 +181,8 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
                 message = "你将删除已缓存的表情包集 ${s.name}，这不会影响已同步的表情包，是否继续？",
                 icon = android.R.drawable.ic_menu_delete,
             ) {
-                File("$stickerDataPath/${s.hash}").delete()
                 File("$destDataPath/tgSync_${s.id}").deleteRecursively()
+                File("$stickerDataPath/${s.hash}").delete()
             }
         }
 
