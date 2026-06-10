@@ -13,7 +13,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.Settings
-import android.util.Log.e
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,15 +26,8 @@ import androidx.core.widget.doOnTextChanged
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import cc.microblock.TGStickerProvider.BuildConfig
-import cc.microblock.TGStickerProvider.R
+import cc.microblock.TGStickerProvider.*
 import cc.microblock.TGStickerProvider.databinding.ActivityMainBinding
-import cc.microblock.TGStickerProvider.destDataPath
-import cc.microblock.TGStickerProvider.exposedPath
-import cc.microblock.TGStickerProvider.nomediaPath2
-import cc.microblock.TGStickerProvider.realDataPath
-import cc.microblock.TGStickerProvider.stickerDataPath
-import cc.microblock.TGStickerProvider.tgspDataPath
 import cc.microblock.TGStickerProvider.ui.activity.base.BaseActivity
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.bumptech.glide.Glide
