@@ -212,10 +212,10 @@
         android:id="@+id/unsupported"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
+        android:gravity="center_vertical"
         android:layout_marginRight="4dp"
         android:text="不支持的格式"
-        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/rmBtn" />
 
