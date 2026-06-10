@@ -19,7 +19,6 @@
             android:id="@+id/sticker_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:maxHeight="16sp"
             android:text=""
             android:textColor="@color/colorPrimaryAccent"
             android:textSize="12sp"
@@ -29,7 +28,6 @@
             android:id="@+id/sticker_id"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:maxHeight="18sp"
             android:text=""
             android:textSize="16sp"
             android:textIsSelectable="true" />
@@ -210,6 +208,7 @@
         android:layout_marginTop="5dp"
         app:cardCornerRadius="8dp"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <VideoView
