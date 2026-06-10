@@ -153,7 +153,10 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
         }
 
         fun ProgressDialog.dialogUpdate() {
-            act.runOnUiThread { setMessage("正在更新列表") }
+            act.runOnUiThread {
+                setCancelable(true)
+                setMessage("正在更新列表")
+            }
             act.updateStickerList()
             act.runOnUiThread { dismiss() }
         }
