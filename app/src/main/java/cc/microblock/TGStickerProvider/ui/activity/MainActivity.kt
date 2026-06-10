@@ -521,7 +521,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
         val ignoreIds = try {
             File("$exposedPath/ignore.txt").run {
-                if (exists()) readLines().filterNot { it.startsWith("#") }
+                if (exists())
+                    readLines().filterNot { it.startsWith("#") }
+                        .map { it.substringBefore(' ').substringBefore('#') }
                 else {
                     writeText(
                         """# write the ignored sticker IDs here
