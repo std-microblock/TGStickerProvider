@@ -20,8 +20,8 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import android.widget.VideoView
-import androidx.annotation.RequiresApi
 import androidx.cardview.widget.CardView
+import androidx.core.view.isVisible
 import androidx.core.widget.doOnTextChanged
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -129,7 +129,7 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
                 holder.imageView.visibility = View.GONE
                 holder.videoCard.visibility = View.GONE
                 holder.videoView.stopPlayback()
-                holder.rmBtn.visibility = View.GONE
+                holder.rmBtn.visibility = View.VISIBLE
                 holder.syncBtn.visibility = View.GONE
                 holder.unsupported.visibility = View.VISIBLE
                 holder.unsupported.text = "不支持的表情包"
@@ -152,27 +152,55 @@ class RecyclerAdapterStickerList(private val act: MainActivity) :
             });
         }
 
-        holder.rmBtn.setOnClickListener {
-            // dialog confirm
+        fun ProgressDialog.dialogUpdate() {
+            act.runOnUiThread { setMessage("正在更新列表") }
+            act.updateStickerList()
+            act.runOnUiThread { dismiss() }
+        }
+
+        val dialogDelExported = {
             AlertDialog.Builder(act)
-                .setTitle("删除已同步的表情包集 ${s.name}")
-                .setMessage("你将删除已同步的表情包集 ${s.name}，这将会删除 ${s.syncedState.all} 个表情包文件，是否继续？")
-                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setTitle("删除导出缓存 ${s.name}")
+                .setMessage("你将删除已缓存的表情包集 ${s.name}，这不会影响已同步的表情包，是否继续？")
+                .setIcon(android.R.drawable.ic_menu_delete)
                 .setPositiveButton("删除") { _, _ ->
                     val pd = ProgressDialog(act)
                     pd.setMessage("正在删除")
                     pd.show()
                     pd.setCancelable(false)
                     Thread {
-                        // val remoteFolder = "${destDataPath}tgSync_${s.id}"
-                        // File(remoteFolder).deleteRecursively()
-                        File("$realDataPath/tgSync_${s.id}").deleteRecursively()
-                        act.runOnUiThread { pd.setMessage("正在更新列表") }
-                        act.updateStickerList()
-                        act.runOnUiThread { pd.dismiss() }
+                        File("$stickerDataPath/${s.hash}").delete()
+                        File("$destDataPath/tgSync_${s.id}").deleteRecursively()
+                        pd.dialogUpdate()
                     }.start()
                 }
                 .setNegativeButton("算了", null).show()
+        }
+
+        holder.rmBtn.setOnClickListener {
+            // dialog confirm
+            if (holder.unsupported.isVisible) {
+                dialogDelExported()
+            } else {
+                AlertDialog.Builder(act).setTitle("删除已同步的表情包集 ${s.name}")
+                    .setMessage("你将删除已同步的表情包集 ${s.name}，这将会删除 ${s.syncedState.all} 个表情包文件，是否继续？")
+                    .setIcon(android.R.drawable.ic_dialog_alert).setPositiveButton("删除") { _, _ ->
+                        val pd = ProgressDialog(act)
+                        pd.setMessage("正在删除")
+                        pd.show()
+                        pd.setCancelable(false)
+                        Thread {
+                            // val remoteFolder = "${destDataPath}tgSync_${s.id}"
+                            // File(remoteFolder).deleteRecursively()
+                            File("$realDataPath/tgSync_${s.id}").deleteRecursively()
+                            pd.dialogUpdate()
+                        }.start()
+                    }.setNegativeButton("算了", null).show()
+            }
+        }
+        holder.rmBtn.setOnLongClickListener {
+            dialogDelExported()
+            true
         }
         //        holder.hash.text = stickerList[position].hash
     }
