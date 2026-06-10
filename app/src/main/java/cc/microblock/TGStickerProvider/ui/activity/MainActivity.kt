@@ -516,7 +516,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             File("$exposedPath/ignore.txt").run {
                 if (exists())
                     readLines().filterNot { it.isEmpty() || it.startsWith("#") }
-                        .map { it.substringBefore(' ').substringBefore('#') }
+                        .map { it.substringBefore('#').trim() }
                         .toSet()
                 else {
                     writeText(
