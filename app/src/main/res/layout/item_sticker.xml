@@ -22,7 +22,8 @@
             android:maxHeight="16sp"
             android:text=""
             android:textColor="@color/colorPrimaryAccent"
-            android:textSize="12sp" />
+            android:textSize="12sp"
+            android:textIsSelectable="true" />
 
         <TextView
             android:id="@+id/sticker_id"
@@ -30,7 +31,8 @@
             android:layout_height="wrap_content"
             android:maxHeight="18sp"
             android:text=""
-            android:textSize="16sp" />
+            android:textSize="16sp"
+            android:textIsSelectable="true" />
 
         <LinearLayout
             android:layout_width="wrap_content"
