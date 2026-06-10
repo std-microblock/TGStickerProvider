@@ -13,6 +13,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.Settings
+import android.util.Log.e
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -522,20 +523,21 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         val ignoreIds = try {
             File("$exposedPath/ignore.txt").run {
                 if (exists())
-                    readLines().filterNot { it.startsWith("#") }
+                    readLines().filterNot { it.isEmpty() || it.startsWith("#") }
                         .map { it.substringBefore(' ').substringBefore('#') }
+                        .toSet()
                 else {
                     writeText(
                         """# write the ignored sticker IDs here
                             |# separate with line breaks
                         """.trimMargin()
                     )
-                    emptyList()
+                    emptySet()
                 }
             }
         } catch (e: Exception) {
             YLog.error("Error while reading ignore.txt", e)
-            emptyList()
+            emptySet()
         }
         YLog.info("ignoreIds: [${ignoreIds.joinToString { "`$it`" }}]")
 
